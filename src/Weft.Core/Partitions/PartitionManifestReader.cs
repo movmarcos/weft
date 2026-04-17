@@ -15,7 +15,7 @@ public sealed class PartitionManifestReader
             var records = table.Partitions
                 .Select(p => new PartitionRecord(
                     Name: p.Name,
-                    RefreshBookmark: p.Annotations.Find("RefreshBookmark")?.Value is { Length: > 0 } v ? v : null,
+                    RefreshBookmark: p.Annotations.Find(PartitionAnnotationNames.RefreshBookmark)?.Value is { Length: > 0 } v ? v : null,
                     ModifiedTime: p.ModifiedTime == default ? null : p.ModifiedTime,
                     RowCount: null))
                 .ToList();

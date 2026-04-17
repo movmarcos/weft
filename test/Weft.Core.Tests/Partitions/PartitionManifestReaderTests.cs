@@ -17,7 +17,7 @@ public class PartitionManifestReaderTests
         var db = FixtureLoader.LoadBim("models/tiny-static.bim");
         // Simulate a bookmark on FactSales partition (stored as an annotation)
         db.Model.Tables["FactSales"].Partitions["FactSales"].Annotations
-            .Add(new Annotation { Name = "RefreshBookmark", Value = "wm-001" });
+            .Add(new Annotation { Name = PartitionAnnotationNames.RefreshBookmark, Value = "wm-001" });
 
         var manifest = new PartitionManifestReader().Read(db);
 
