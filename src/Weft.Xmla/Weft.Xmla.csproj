@@ -1,0 +1,6 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Weft.Core\Weft.Core.csproj" />
+    <!-- TOM is referenced transitively via Weft.Core -->
+  </ItemGroup>
+</Project>
