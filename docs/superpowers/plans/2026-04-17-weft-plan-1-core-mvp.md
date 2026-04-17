@@ -2599,7 +2599,7 @@ Walk the spec sections this plan claims to implement and confirm each has a task
 | §7A.7 bookmark preservation in alter | Tasks 20, 21 |
 | §7A.8 retention math (history-loss detection) | Task 17 (Year only; Quarter/Month follow-up) |
 | §7A.9 restore partition-set computation | Task 18 |
-| §10 unit-test priorities 1, 2, 3, 6, 7, 8 | Tasks 5–22 |
+| §10 unit-test priorities 1, 2, 3, 6, 7, 8, 9 | Tasks 5–22 + follow-up RefreshTargets test |
 
 Items NOT in this plan and tracked elsewhere:
 - Refresh-scope derivation per-table refresh-type matrix (§6 step 13) — needs the refresh runner; Plan 2.

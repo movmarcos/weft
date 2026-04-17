@@ -29,7 +29,8 @@ public sealed class ColumnComparer
     }
 
     private static bool ColumnsEqual(Column a, Column b) =>
-        a.DataType == b.DataType
+        a.GetType() == b.GetType()
+        && a.DataType == b.DataType
         && string.Equals(a is DataColumn da ? da.SourceColumn : null,
                           b is DataColumn db ? db.SourceColumn : null, StringComparison.Ordinal)
         && string.Equals((a as CalculatedColumn)?.Expression,

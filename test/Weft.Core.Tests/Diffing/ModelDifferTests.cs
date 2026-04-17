@@ -87,4 +87,20 @@ public class ModelDifferTests
         diff.RefreshPolicyChanged.Should().BeTrue();
         diff.Classification.Should().Be(TableClassification.IncrementalRefreshPolicy);
     }
+
+    [Fact]
+    public void RefreshTargets_is_union_of_added_and_altered_tables()
+    {
+        var src = FixtureLoader.LoadBim("models/tiny-static.bim");
+        var tgt = FixtureLoader.LoadBim("models/tiny-static.bim");
+
+        src.Model.Tables.Add(new Table { Name = "BrandNewTable" });
+        src.Model.Tables["FactSales"].Columns.Add(
+            new DataColumn { Name = "Region", DataType = DataType.String, SourceColumn = "Region" });
+
+        var cs = new ModelDiffer().Compute(src, tgt);
+
+        cs.RefreshTargets.Should().BeEquivalentTo(new[] { "BrandNewTable", "FactSales" });
+        cs.RefreshTargets.Should().NotContain("DimDate"); // unchanged tables never refreshed
+    }
 }

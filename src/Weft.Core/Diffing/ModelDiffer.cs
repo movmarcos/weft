@@ -19,12 +19,12 @@ public sealed class ModelDiffer
         var srcTables = source.Model.Tables.ToDictionary(t => t.Name, StringComparer.Ordinal);
         var tgtTables = target.Model.Tables.ToDictionary(t => t.Name, StringComparer.Ordinal);
 
-        var add = srcTables.Keys.Except(tgtTables.Keys).Select(n => MakeAdd(srcTables[n])).ToList();
+        var add = srcTables.Keys.Except(tgtTables.Keys).OrderBy(n => n, StringComparer.Ordinal).Select(n => MakeAdd(srcTables[n])).ToList();
         var drop = tgtTables.Keys.Except(srcTables.Keys).OrderBy(x => x).ToList();
 
         var alter = new List<TableDiff>();
         var unchanged = new List<string>();
-        foreach (var name in srcTables.Keys.Intersect(tgtTables.Keys))
+        foreach (var name in srcTables.Keys.Intersect(tgtTables.Keys).OrderBy(n => n, StringComparer.Ordinal))
         {
             var diff = DiffTable(srcTables[name], tgtTables[name]);
             if (diff is null) unchanged.Add(name);

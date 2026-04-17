@@ -19,12 +19,22 @@ public sealed class TabularEditorFolderLoader : IModelLoader
 
         var root = JsonNode.Parse(File.ReadAllText(dbPath))!.AsObject();
         var model = root["model"]!.AsObject();
-        var tables = (model["tables"] as JsonArray) ?? new JsonArray();
+
+        // Build a fresh tables array so we never attempt to reparent an already-owned JsonNode.
+        var tables = new JsonArray();
+
+        // Preserve any tables already declared inline in database.json (rare, but possible).
+        var existingTables = model["tables"] as JsonArray;
+        if (existingTables is not null)
+        {
+            foreach (var t in existingTables)
+                tables.Add(t!.DeepClone());
+        }
 
         var tablesDir = Path.Combine(path, "tables");
         if (Directory.Exists(tablesDir))
         {
-            foreach (var file in Directory.EnumerateFiles(tablesDir, "*.json", SearchOption.AllDirectories))
+            foreach (var file in Directory.EnumerateFiles(tablesDir, "*.json", SearchOption.TopDirectoryOnly))
             {
                 var tableNode = JsonNode.Parse(File.ReadAllText(file))!;
                 tables.Add(tableNode.DeepClone());
