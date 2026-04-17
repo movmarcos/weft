@@ -15,6 +15,7 @@ public static class Program
         var root = new RootCommand("Weft — diff-based Power BI semantic-model deploys.");
         root.Subcommands.Add(ValidateCommand.Build());
         root.Subcommands.Add(PlanCommand.Build());
+        root.Subcommands.Add(InspectCommand.Build());
         return root;
     }
 }
