@@ -129,4 +129,53 @@ public class PartitionIntegrityValidatorTests
         act.Should().Throw<PartitionIntegrityException>()
            .WithMessage("*Bookmark*");
     }
+
+    [Fact]
+    public void Throws_when_emitted_bookmark_appears_on_partition_without_one_on_target()
+    {
+        var tgt = FixtureLoader.LoadBim("models/tiny-static.bim");
+        // target has NO bookmark on FactSales partition.
+
+        var malicious = """
+        {
+          "sequence": {
+            "maxParallelism": 1,
+            "operations": [
+              {
+                "createOrReplace": {
+                  "object": { "database": "TinyStatic", "table": "FactSales" },
+                  "table": {
+                    "name": "FactSales",
+                    "columns": [],
+                    "partitions": [
+                      {
+                        "name": "FactSales", "mode": "import",
+                        "source": { "type": "m", "expression": "x" },
+                        "annotations": [ { "name": "RefreshBookmark", "value": "injected" } ]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+        """;
+
+        var cs = new ChangeSet(
+            TablesToAdd: Array.Empty<TablePlan>(),
+            TablesToDrop: Array.Empty<string>(),
+            TablesToAlter: Array.Empty<TableDiff>(),
+            TablesUnchanged: Array.Empty<string>(),
+            MeasuresChanged: Array.Empty<string>(),
+            RelationshipsChanged: Array.Empty<string>(),
+            RolesChanged: Array.Empty<string>(),
+            PerspectivesChanged: Array.Empty<string>(),
+            CulturesChanged: Array.Empty<string>(),
+            ExpressionsChanged: Array.Empty<string>(),
+            DataSourcesChanged: Array.Empty<string>());
+
+        var act = () => new PartitionIntegrityValidator().Validate(malicious, tgt, cs);
+        act.Should().Throw<PartitionIntegrityException>().WithMessage("*injected*");
+    }
 }

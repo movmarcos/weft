@@ -23,6 +23,8 @@ public sealed class RefreshPolicyComparer
                 && string.Equals(ba.PollingExpression, bb.PollingExpression, StringComparison.Ordinal)
                 && ba.Mode == bb.Mode;
         }
-        return a.GetType() == b.GetType();
+        throw new NotSupportedException(
+            $"Refresh policy comparison not implemented for type {a.GetType().FullName}. " +
+            $"File an issue if Microsoft has shipped a new RefreshPolicy subclass.");
     }
 }

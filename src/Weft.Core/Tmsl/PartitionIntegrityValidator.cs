@@ -47,6 +47,8 @@ public sealed class PartitionIntegrityValidator
 
             // Bookmark preservation: every emitted partition that exists on target must
             // carry the same RefreshBookmark annotation (or both must be empty).
+            // Symmetric check: also catch the case where TMSL injects a bookmark on a
+            // partition that the target did not have.
             foreach (var emitted in emittedPartitionNodes)
             {
                 var name = emitted?["name"]?.GetValue<string>();
@@ -56,19 +58,22 @@ public sealed class PartitionIntegrityValidator
                 var targetPartition = target.Model.Tables[tableName].Partitions[name];
                 var targetBookmark = targetPartition.Annotations
                     .Find(PartitionAnnotationNames.RefreshBookmark)?.Value;
-                if (string.IsNullOrEmpty(targetBookmark)) continue;
 
                 var emittedBookmark = ((emitted!["annotations"] as JsonArray) ?? new JsonArray())
                     .OfType<JsonObject>()
                     .FirstOrDefault(a => a["name"]?.GetValue<string>() == PartitionAnnotationNames.RefreshBookmark)
                     ?["value"]?.GetValue<string>();
 
+                var targetEmpty = string.IsNullOrEmpty(targetBookmark);
+                var emittedEmpty = string.IsNullOrEmpty(emittedBookmark);
+
+                if (targetEmpty && emittedEmpty) continue;
+
                 if (!string.Equals(targetBookmark, emittedBookmark, StringComparison.Ordinal))
                 {
                     throw new PartitionIntegrityException(
                         $"Bookmark integrity violation on '{tableName}'/'{name}': " +
-                        $"target RefreshBookmark '{targetBookmark}' was not preserved in generated TMSL " +
-                        $"(emitted: '{emittedBookmark ?? "<missing>"}').");
+                        $"target RefreshBookmark '{targetBookmark ?? "<none>"}' did not match emitted '{emittedBookmark ?? "<none>"}'.");
                 }
             }
         }
