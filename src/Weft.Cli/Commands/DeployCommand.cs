@@ -83,7 +83,7 @@ public static class DeployCommand
         IPartitionManifestStore manifestStore,
         CancellationToken cancellationToken = default)
     {
-        _ = resetBookmarks; // reserved for upcoming reset-bookmarks wiring (Plan 2 Task 26+).
+        _ = resetBookmarks; // Plan 3 (config + bookmark-mode wiring).
 
         // 1. Auth
         AccessToken token;

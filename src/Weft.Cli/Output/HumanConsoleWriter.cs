@@ -5,6 +5,7 @@ using Spectre.Console;
 
 namespace Weft.Cli.Output;
 
+// Wired into commands in Plan 3.
 public sealed class HumanConsoleWriter : IConsoleWriter
 {
     public void Info(string message)  => AnsiConsole.MarkupLine($"[grey]{Markup.Escape(message)}[/]");

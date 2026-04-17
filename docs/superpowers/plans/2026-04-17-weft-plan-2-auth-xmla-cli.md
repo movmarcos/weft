@@ -3506,7 +3506,7 @@ dotnet test
 ```
 Expected:
 - 0 build warnings, 0 errors.
-- Test count ≥ 60 (Plan-1 base 41 + ~20 from Plan 2).
+- Test count: Core 42, Auth 12, Xmla 9, Cli 11, Integration 1 (skipped locally) = 75 tests total (74 passing + 1 skipped).
 - Integration tests skipped locally (no env vars).
 
 - [ ] **Step 2: Tag**
