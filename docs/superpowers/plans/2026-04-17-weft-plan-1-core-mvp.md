@@ -175,6 +175,14 @@ Edit `src/Weft.Core/Weft.Core.csproj` to add the package reference:
 </ItemGroup>
 ```
 
+- [ ] **Step 2.5: Pin MSAL for security**
+
+TOM 19.84.1 transitively brings MSAL 4.56.0 which has known CVEs (GHSA-m5vv-6r4h-3vj9, GHSA-x674-v45j-fwxw). With TreatWarningsAsErrors, NU1901/NU1902 break the build. Pin a patched MSAL directly:
+```xml
+<PackageReference Include="Microsoft.Identity.Client" Version="4.83.3" />
+```
+Re-evaluate when TOM bumps its own MSAL floor past 4.83.x.
+
 - [ ] **Step 3: Add to solution**
 
 ```bash

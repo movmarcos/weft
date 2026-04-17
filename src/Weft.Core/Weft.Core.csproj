@@ -2,6 +2,11 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AnalysisServices.NetCore.retail.amd64" Version="19.84.1" />
+    <!--
+      Pin MSAL to patch transitive dep from Microsoft.AnalysisServices.NetCore.retail.amd64 19.84.1,
+      which drags MSAL 4.56.0 (vulnerable: GHSA-m5vv-6r4h-3vj9, GHSA-x674-v45j-fwxw).
+      Re-evaluate when TOM publishes a release that bumps its own MSAL floor past 4.83.x.
+    -->
     <PackageReference Include="Microsoft.Identity.Client" Version="4.83.3" />
   </ItemGroup>
 
