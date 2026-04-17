@@ -32,6 +32,7 @@ Power BI semantic models with dynamically-created partitions (e.g., date-based r
 6. **Integrates with GitHub / TeamCity / Octopus.** No dependency on Azure DevOps.
 7. **Cross-platform development.** Engineers on macOS/Linux can build, test, and run the tool locally.
 8. **Open-source-ready.** Clean repo structure, MIT license, good docs, reusable as a public project.
+9. **Incremental refresh policy aware.** Tables with a declarative `RefreshPolicy` (Power BI incremental refresh) must be detected and refreshed via the policy, not via full reload. Policy-generated historical partitions (years → quarters → months) must be preserved across deploys; changes to the policy itself must propagate as a schema alter.
 
 ## 3. Naming
 
@@ -93,7 +94,7 @@ Compares source vs. target and emits a typed `ChangeSet`:
 
 ```
 ChangeSet {
-  TablesToAdd     : Table[]      // new in source
+  TablesToAdd     : TablePlan[]  // new in source, with classification
   TablesToDrop    : string[]     // in target only
   TablesToAlter   : TableDiff[]  // schema-changed, keep partitions
   TablesUnchanged : string[]     // skip entirely
@@ -101,16 +102,35 @@ ChangeSet {
     / Cultures / DataSources / Expressions : per-type diffs
 }
 
+TableClassification =
+  | Static                        // no policy, stable partitions
+  | DynamicallyPartitioned        // target has partitions not in source
+  | IncrementalRefreshPolicy      // table has a RefreshPolicy object
+
+TablePlan {
+  Name
+  Classification: TableClassification
+  SourceTable: Table
+}
+
 TableDiff {
   Name
+  Classification: TableClassification
   ColumnChanges, HierarchyChanges, MeasureChanges,
-  PartitionStrategy: PreserveTarget | UseSource
+  RefreshPolicyChanged: bool          // true when policy object differs
+  PartitionStrategy: PreserveTarget | UseSource   // PreserveTarget is default
 }
 ```
 
-**Table schema equality excludes the `Partitions` collection** — only columns, expressions, hierarchies, annotations, and table-level properties are compared. This is the mechanism that implements the core rule: partitions on existing tables are never touched.
+**Table schema equality excludes the `Partitions` collection** — only columns, expressions, hierarchies, annotations, the `RefreshPolicy` object, and table-level properties are compared. Partitions on existing tables are never touched.
 
-Auto-detection: if target has partitions whose names do not exist in source, the table is treated as dynamically partitioned and its partition collection is always preserved, regardless of other schema drift.
+**Classification logic (in priority order, first match wins):**
+
+1. **IncrementalRefreshPolicy** — source or target table has a non-null `RefreshPolicy`. Partitions always preserved on target (the service materializes them per policy). Policy object itself is diffed as schema.
+2. **DynamicallyPartitioned** — target has partition names not present in source (e.g., partitions created by an external job). Partitions always preserved.
+3. **Static** — neither of the above. Partition collection participates in equality (so renaming a partition in source is a real change).
+
+Classification feeds refresh-type selection (§6, step 13) and the human-readable plan output.
 
 ### 5.4 `TmslBuilder`
 Translates `ChangeSet` into a single TMSL `sequence` script:
@@ -188,14 +208,28 @@ A single `weft deploy --source ./model.bim --target prod --config weft.yaml` run
     - On failure: log XMLA messages, run on-failure hook, exit non-zero
     - The sequence is transactional server-side -> no partial state
 
-13. Determine refresh scope
+13. Determine refresh scope and per-table refresh type
     - refreshTargets = TablesToAdd ∪ TablesToAlter
     - Unchanged tables are NEVER refreshed
+    - For each target table, derive refresh type:
+        * Classification = IncrementalRefreshPolicy
+            -> RefreshType = Policy, ApplyRefreshPolicy = true
+            -> New table: warn "first refresh will materialize historical window per policy"
+            -> Existing table with RefreshPolicyChanged=true: warn
+               "policy change will trigger partition re-materialization"
+        * Classification = DynamicallyPartitioned
+            -> RefreshType = defaults.refresh.type (typically Full) on SPECIFIC
+               partitions the table owns; never drop existing partitions
+            -> If partition list is large, refresh only the newest partition
+               (configurable via refresh.dynamicPartitionStrategy)
+        * Classification = Static
+            -> RefreshType = defaults.refresh.type (typically Full)
 
 14. Hook: pre-refresh
 
 15. Refresh
-    - XmlaExecutor.Refresh(refreshTargets, RefreshType.Full)
+    - Group refresh commands by type to honor maxParallelism
+    - XmlaExecutor.Refresh(group) per classification group
     - Poll every N seconds; stream progress to stdout
     - On failure: log, run on-failure hook, exit non-zero
 
@@ -279,6 +313,84 @@ A parameter value change between resolved source and target is **not** treated a
 ### 7.6 Data sources (legacy)
 
 Models with direct `DataSource` connection strings (pre-M-parameter style) can still use an `overrides.<profile>.dataSources` block as a secondary mechanism. Recommended migration path: move to M parameters.
+
+## 7A. Incremental Refresh Policy Support
+
+Power BI supports declarative **incremental refresh** via a `RefreshPolicy` object on a `Table`. The model source declares the policy (rolling window, incremental window, granularity, source expression with `RangeStart`/`RangeEnd` parameters). At refresh time with `ApplyRefreshPolicy = true`, the Analysis Services engine materializes partitions according to the policy — typically a stack of Years → Quarters → Months — and rolls the window forward on each subsequent refresh.
+
+This interacts with Weft's core partition-preservation rule in three distinct ways.
+
+### 7A.1 Detection
+
+A table is classified `IncrementalRefreshPolicy` when either the source or target `Table.RefreshPolicy` is non-null. Weft reads this from the TOM model; no configuration required. A table cannot be both `IncrementalRefreshPolicy` and `DynamicallyPartitioned` — the policy classification wins because the service owns those partitions.
+
+### 7A.2 Policy changes are schema changes
+
+The `RefreshPolicy` object is compared field-by-field during diffing:
+- `RollingWindowGranularity`, `RollingWindowPeriods`
+- `IncrementalGranularity`, `IncrementalPeriods`
+- `IncrementalPeriodsOffset`
+- `SourceExpression`
+- `PollingExpression`
+- `Mode` (Import vs. Hybrid for Direct Lake coexistence, where applicable)
+
+If any field differs, `TableDiff.RefreshPolicyChanged = true`. The alter is applied; partition collection on target is preserved as always. On the next refresh, `ApplyRefreshPolicy = true` causes the engine to re-materialize partitions under the new policy — which may be expensive — so `weft plan` prints an explicit warning:
+
+```
+~ Table FactSales (policy changed: RollingWindowPeriods 2y -> 3y)
+  WARNING: applying the new policy will re-materialize historical partitions.
+           Current partitions: 48    Projected after policy: 60
+```
+
+### 7A.3 Refresh semantics
+
+Refresh type is derived per table in step 13 of §6 Data Flow:
+
+| Classification | RefreshType | ApplyRefreshPolicy | Notes |
+|---|---|---|---|
+| IncrementalRefreshPolicy (new table) | `Policy` | `true` | First refresh materializes history |
+| IncrementalRefreshPolicy (policy changed) | `Policy` | `true` | Re-materializes per new policy |
+| IncrementalRefreshPolicy (only schema changed) | `Policy` | `false` | Rolls window forward, no history churn |
+| DynamicallyPartitioned | `defaults.refresh.type` | `false` | Targets specific partitions only |
+| Static | `defaults.refresh.type` | n/a | As per global default |
+
+The `EffectiveDate` XMLA option (for running the policy as if on a specific date) is exposed via `--effective-date YYYY-MM-DD` on `weft deploy` and `weft refresh`, defaulting to today (UTC).
+
+### 7A.4 Config knobs
+
+```yaml
+defaults:
+  refresh:
+    type: full
+    maxParallelism: 10
+    pollIntervalSeconds: 15
+    # Behavior overrides for incremental-refresh tables:
+    incrementalPolicy:
+      applyOnFirstDeploy: true     # false = deploy only, leave materialization to caller
+      applyOnPolicyChange: true    # false = deploy the policy, skip re-materialization
+    # Behavior override for dynamically-partitioned tables:
+    dynamicPartitionStrategy:
+      mode: newestOnly             # newestOnly | allTouched | none
+      newestN: 1
+```
+
+When `applyOnFirstDeploy` is `false`, a newly deployed incremental-refresh table is left with its single template partition; ops triggers the first materialization out-of-band. This is useful when the first materialization is known to take hours and should run on a data team's schedule, not in a release window.
+
+### 7A.5 Validation
+
+At `plan` time, Weft issues targeted warnings that appear as a separate block in the plan output:
+
+- Detected `RangeStart` / `RangeEnd` parameters used in M expressions → confirm they are declared in the model (Power BI requires this).
+- Policy source expression references columns/tables not visible from the source data source binding → WARN.
+- Policy defines a rolling window beyond the available data source history → INFO.
+
+These are non-blocking by default; `--strict` promotes them to errors.
+
+### 7A.6 Diff behavior with parameters
+
+Changing `RangeStart` / `RangeEnd` parameter VALUES per environment (via §7 parameter resolution) does NOT mark an incremental-refresh table as changed — the parameter values are expected to differ and are not part of policy identity. Changing the parameter EXPRESSIONS in source (rare) is a parameter schema change, not a policy schema change.
+
+---
 
 ## 8. Full Config Schema — `weft.yaml`
 
@@ -399,9 +511,18 @@ Pure logic, no network, no file I/O. Fixtures are hand-crafted tiny TOM models s
    - Table with target-only extra partitions → always preserved.
    - New table → source partitions used.
    - Dropped table → `Delete` only with `--allow-drops`.
-2. **Parameter resolution** — priority order, type coercion, required-missing fails, parameter change does not flag table schema change.
-3. **TMSL builder produces a single `sequence`** with the right ops in the right order.
-4. **Refresh scope derivation** — `TablesToAdd ∪ TablesToAlter`, excluding unchanged.
+2. **Table classification** (§5.3):
+   - RefreshPolicy present on source or target → IncrementalRefreshPolicy wins over DynamicallyPartitioned.
+   - Target-only partitions → DynamicallyPartitioned.
+   - Neither → Static.
+3. **Refresh policy diffing** (§7A):
+   - Policy field-by-field equality; any difference sets `RefreshPolicyChanged=true`.
+   - Parameter VALUE changes on `RangeStart`/`RangeEnd` do NOT mark the table changed.
+   - Parameter EXPRESSION changes in source DO mark it changed.
+4. **Per-table refresh type derivation** (§6 step 13 matrix) — every classification/change-type combination produces the expected `RefreshType` + `ApplyRefreshPolicy` pair.
+5. **Parameter resolution** — priority order, type coercion, required-missing fails, parameter change does not flag table schema change.
+6. **TMSL builder produces a single `sequence`** with the right ops in the right order.
+7. **Refresh scope derivation** — `TablesToAdd ∪ TablesToAlter`, excluding unchanged.
 
 **Framework:** xUnit + FluentAssertions + Verify.Xunit (snapshot testing for TMSL output).
 
@@ -581,7 +702,7 @@ Mirrors TeamCity using the `dotnet` action with a RID matrix. Publishes to GitHu
 ## 13. Out of Scope for v1
 
 - **Plugin system** — third-party commands. YAGNI until someone asks.
-- **Partition lifecycle management** — creating/dropping partitions on a rolling schedule belongs to data-engineering rhythms, not release tooling.
+- **Manual partition lifecycle management** — creating/dropping partitions on a custom schedule outside of a declared `RefreshPolicy` belongs to data-engineering rhythms, not release tooling. (Weft DOES handle `RefreshPolicy`-driven partition rolling via `ApplyRefreshPolicy` — see §7A.)
 - **PBIX deployment** — Weft deploys the model (TMSL-compatible). PBIX-specific features (reports, visuals) are outside scope; `pbi-tools` already exists for that layer.
 - **Azure Analysis Services / SSAS on-prem** support. XMLA library works with both, but targeting PBI Premium first keeps auth/config scope focused. Easy follow-on.
 - **Managed Identity auth** — add if/when an Azure-VM Octopus worker needs it.
