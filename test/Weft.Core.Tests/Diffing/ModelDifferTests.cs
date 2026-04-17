@@ -47,4 +47,44 @@ public class ModelDifferTests
 
         cs.TablesToDrop.Should().Equal("OldTable");
     }
+
+    [Fact]
+    public void Column_added_to_existing_table_is_an_alter_with_preserved_partitions()
+    {
+        var src = FixtureLoader.LoadBim("models/tiny-static.bim");
+        var tgt = FixtureLoader.LoadBim("models/tiny-static.bim");
+
+        src.Model.Tables["FactSales"].Columns.Add(
+            new DataColumn { Name = "Region", DataType = DataType.String, SourceColumn = "Region" });
+
+        var cs = new ModelDiffer().Compute(src, tgt);
+
+        cs.TablesToAlter.Should().ContainSingle()
+            .Which.Should().Match<TableDiff>(d =>
+                d.Name == "FactSales" &&
+                d.ColumnsAdded.SequenceEqual(new[] { "Region" }) &&
+                d.PartitionStrategy == PartitionStrategy.PreserveTarget);
+    }
+
+    [Fact]
+    public void Refresh_policy_change_marks_table_alter_with_policy_flag()
+    {
+        var src = FixtureLoader.LoadBim("models/tiny-static.bim");
+        var tgt = FixtureLoader.LoadBim("models/tiny-static.bim");
+
+        src.Model.Tables["FactSales"].RefreshPolicy = new BasicRefreshPolicy
+        {
+            RollingWindowGranularity = RefreshGranularityType.Year,
+            RollingWindowPeriods = 5,
+            IncrementalGranularity = RefreshGranularityType.Day,
+            IncrementalPeriods = 10,
+            SourceExpression = "let Source = #table({\"Date\",\"Amount\"}, {}) in Source"
+        };
+
+        var cs = new ModelDiffer().Compute(src, tgt);
+
+        var diff = cs.TablesToAlter.Single(d => d.Name == "FactSales");
+        diff.RefreshPolicyChanged.Should().BeTrue();
+        diff.Classification.Should().Be(TableClassification.IncrementalRefreshPolicy);
+    }
 }
