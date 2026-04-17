@@ -21,7 +21,8 @@ public sealed class TmslBuilder
         foreach (var add in changeSet.TablesToAdd)
             seq.Add(CreateTable(dbName, add.SourceTable));
 
-        // Alters in Task 20.
+        foreach (var alter in changeSet.TablesToAlter)
+            seq.Add(AlterTable(dbName, alter, source, target));
 
         var json = seq.ToJson();
         new PartitionIntegrityValidator().Validate(json, target, changeSet);
@@ -40,6 +41,34 @@ public sealed class TmslBuilder
                 }
             }
         };
+
+    private static JsonNode AlterTable(string database, TableDiff diff, Database source, Database target)
+    {
+        var srcTable = source.Model.Tables[diff.Name];
+        var tgtTable = target.Model.Tables[diff.Name];
+
+        // Build a new Table that has source schema but TARGET partitions (deep-cloned so
+        // every partition-level property — including the RefreshBookmark annotation — carries over).
+        var merged = srcTable.Clone();
+        merged.Partitions.Clear();
+        foreach (var p in tgtTable.Partitions)
+            merged.Partitions.Add(p.Clone());
+
+        var tableJson = SerializeTableObject(merged);
+
+        return new JsonObject
+        {
+            ["createOrReplace"] = new JsonObject
+            {
+                ["object"] = new JsonObject
+                {
+                    ["database"] = database,
+                    ["table"]    = diff.Name
+                },
+                ["table"] = tableJson
+            }
+        };
+    }
 
     private static JsonNode CreateTable(string database, Table table)
     {
