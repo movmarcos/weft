@@ -18,6 +18,7 @@ public static class Program
         root.Subcommands.Add(InspectCommand.Build());
         root.Subcommands.Add(DeployCommand.Build());
         root.Subcommands.Add(RefreshCommand.Build());
+        root.Subcommands.Add(RestoreHistoryCommand.Build());
         return root;
     }
 }
