@@ -100,4 +100,4 @@ dotnet_style_prefer_conditional_expression_over_return = true:silent
 
 # Require file header (IDE0073)
 dotnet_diagnostic.IDE0073.severity = warning
-file_header_template = // Copyright (c) Marcos Magri / Weft contributors. All rights reserved.\n// Licensed under the MIT License.
+file_header_template = Copyright (c) Marcos Magri / Weft contributors. All rights reserved.\nLicensed under the MIT License.
