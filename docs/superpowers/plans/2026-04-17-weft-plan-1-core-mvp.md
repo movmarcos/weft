@@ -4,9 +4,9 @@
 
 **Goal:** Build the pure-logic core of Weft — load source models, compare them against target snapshots, classify tables (Static / DynamicallyPartitioned / IncrementalRefreshPolicy), produce a transactional TMSL `sequence` script that preserves partitions and bookmarks, and enforce the partition-integrity invariant. No network calls, no AAD — everything runs against in-memory TOM `Database` fixtures and is fully unit-tested.
 
-**Architecture:** A single .NET 8 class library `Weft.Core` plus a test project `Weft.Core.Tests`. Public surface is small: `IModelLoader`, `ModelDiffer`, `TmslBuilder`, `PartitionManifest`, `RefreshPolicyAnalyzer`, `RestorePartitionSet`. Each module has one responsibility and is unit-testable in isolation. The integration with XMLA, auth, CLI, and config is deferred to Plan 2 and Plan 3.
+**Architecture:** A single .NET 10 class library `Weft.Core` plus a test project `Weft.Core.Tests`. Public surface is small: `IModelLoader`, `ModelDiffer`, `TmslBuilder`, `PartitionManifest`, `RefreshPolicyAnalyzer`, `RestorePartitionSet`. Each module has one responsibility and is unit-testable in isolation. The integration with XMLA, auth, CLI, and config is deferred to Plan 2 and Plan 3.
 
-**Tech Stack:** .NET 8, Microsoft.AnalysisServices.NetCore.retail.amd64 (TOM), xUnit, FluentAssertions, Verify.Xunit, System.Text.Json.
+**Tech Stack:** .NET 10, Microsoft.AnalysisServices.NetCore.retail.amd64 (TOM), xUnit, FluentAssertions, Verify.Xunit, System.Text.Json.
 
 **Reference spec:** `docs/superpowers/specs/2026-04-17-weft-design.md`. Sections this plan implements: §5.1 ModelLoader, §5.3 ModelDiffer, §5.4 TmslBuilder, §7A.1–§7A.2 (classification + policy diffing), §7A.7 bookmark preservation logic, §7A.8 history-loss retention math, §7A.9 restore partition-set computation.
 
@@ -22,7 +22,7 @@
 
 ```
 weft/
-├── global.json                          # pins .NET 8 SDK
+├── global.json                          # pins .NET 10 SDK
 ├── Directory.Build.props                # shared C# settings
 ├── .editorconfig
 ├── .gitignore
@@ -102,7 +102,7 @@ weft/
 Create `global.json`:
 ```json
 {
-  "sdk": { "version": "8.0.404", "rollForward": "latestMinor" }
+  "sdk": { "version": "10.0.105", "rollForward": "latestFeature" }
 }
 ```
 
@@ -112,7 +112,7 @@ Create `Directory.Build.props`:
 ```xml
 <Project>
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
