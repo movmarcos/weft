@@ -1,0 +1,12 @@
+{
+  "name": "FactSales",
+  "columns": [
+    { "name": "Date", "dataType": "dateTime", "sourceColumn": "Date" },
+    { "name": "Amount", "dataType": "double", "sourceColumn": "Amount" }
+  ],
+  "partitions": [{
+    "name": "FactSales", "mode": "import",
+    "source": { "type": "m", "expression": "let Source = #table({\"Date\",\"Amount\"}, {}) in Source" }
+  }],
+  "measures": [{ "name": "Total Sales", "expression": "SUM(FactSales[Amount])" }]
+}
