@@ -34,9 +34,19 @@ public sealed class TabularEditorFolderLoader : IModelLoader
         var tablesDir = Path.Combine(path, "tables");
         if (Directory.Exists(tablesDir))
         {
-            foreach (var file in Directory.EnumerateFiles(tablesDir, "*.json", SearchOption.TopDirectoryOnly))
+            var seenTableNames = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var file in Directory.EnumerateFiles(tablesDir, "*.json", SearchOption.TopDirectoryOnly)
+                                          .OrderBy(p => p, StringComparer.Ordinal))
             {
+                // Skip macOS Finder duplicates: "DimDate 2.json", "FactSales 3.json", etc.
+                var name = Path.GetFileNameWithoutExtension(file);
+                if (System.Text.RegularExpressions.Regex.IsMatch(name, @" \d+$"))
+                    continue;
+
                 var tableNode = JsonNode.Parse(File.ReadAllText(file))!;
+                var tableName = tableNode["name"]?.GetValue<string>();
+                if (tableName is not null && !seenTableNames.Add(tableName))
+                    continue;  // Defensive: silently skip duplicate-name table files
                 tables.Add(tableNode.DeepClone());
             }
         }
