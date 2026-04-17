@@ -17,6 +17,7 @@ public static class Program
         root.Subcommands.Add(PlanCommand.Build());
         root.Subcommands.Add(InspectCommand.Build());
         root.Subcommands.Add(DeployCommand.Build());
+        root.Subcommands.Add(RefreshCommand.Build());
         return root;
     }
 }
