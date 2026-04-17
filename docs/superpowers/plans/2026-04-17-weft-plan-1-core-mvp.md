@@ -144,7 +144,7 @@ dotnet new sln -n weft
 - [ ] **Step 6: Verify and commit**
 
 ```bash
-dotnet --version    # confirm 8.0.x
+dotnet --version    # confirm 10.0.x
 ls weft.sln Directory.Build.props global.json .gitignore LICENSE
 git add global.json Directory.Build.props .editorconfig .gitignore LICENSE weft.sln
 git commit -m "chore: repo scaffolding (sdk pin, build props, license, solution)"
