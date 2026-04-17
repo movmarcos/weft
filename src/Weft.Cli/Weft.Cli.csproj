@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>weft</AssemblyName>
+    <RootNamespace>Weft.Cli</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta5.25306.1" />
+    <PackageReference Include="Spectre.Console" Version="0.55.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Weft.Core\Weft.Core.csproj" />
+    <ProjectReference Include="..\Weft.Auth\Weft.Auth.csproj" />
+    <ProjectReference Include="..\Weft.Xmla\Weft.Xmla.csproj" />
+  </ItemGroup>
+</Project>
