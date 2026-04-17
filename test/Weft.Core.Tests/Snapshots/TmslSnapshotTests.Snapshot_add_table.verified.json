@@ -1,0 +1,17 @@
+﻿{
+  "sequence": {
+    "maxParallelism": 1,
+    "operations": [
+      {
+        "create": {
+          "parentObject": {
+            "database": "TinyStatic"
+          },
+          "table": {
+            "name": "AddedTable"
+          }
+        }
+      }
+    ]
+  }
+}
