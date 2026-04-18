@@ -10,10 +10,15 @@ public class CliSmokeTests
 {
     private static string CliPath()
     {
-        var rid = "net10.0";
+        // Mirror the current test binary's configuration so Release CI finds
+        // Release artifacts and Debug dev runs find Debug artifacts.
+        // BaseDirectory = test/Weft.Cli.Tests/bin/<Configuration>/<TFM>/
+        var tfmDir = new DirectoryInfo(AppContext.BaseDirectory);
+        var tfm = tfmDir.Name;                    // net10.0
+        var configuration = tfmDir.Parent!.Name;  // Debug | Release
         return Path.Combine(
             AppContext.BaseDirectory, "..", "..", "..", "..", "..",
-            "src", "Weft.Cli", "bin", "Debug", rid, "weft.dll");
+            "src", "Weft.Cli", "bin", configuration, tfm, "weft.dll");
     }
 
     private static (int Exit, string Stdout, string Stderr) Run(params string[] args)
