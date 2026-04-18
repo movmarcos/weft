@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:avaloniaEdit="using:AvaloniaEdit"
+             xmlns:dax="using:WeftStudio.Ui.DaxEditor"
+             x:Class="WeftStudio.Ui.DaxEditor.DaxEditorView"
+             x:DataType="dax:DaxEditorViewModel">
+  <Grid RowDefinitions="Auto,*">
+    <Border Grid.Row="0" Background="#EEE" Padding="8,4">
+      <TextBlock>
+        <Run Text="{Binding TableName}"/>
+        <Run Text="["/>
+        <Run Text="{Binding MeasureName}"/>
+        <Run Text="]"/>
+      </TextBlock>
+    </Border>
+    <avaloniaEdit:TextEditor Name="Editor" Grid.Row="1"
+                              FontFamily="Cascadia Mono,Menlo,monospace"
+                              ShowLineNumbers="True"/>
+  </Grid>
+</UserControl>
