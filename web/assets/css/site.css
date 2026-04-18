@@ -1,0 +1,48 @@
+/* site.css — site-wide misc + footer + link defaults.
+   tokens.css already set up the reset, colors, and base typography. */
+
+body { min-height: 100vh; display: flex; flex-direction: column; }
+main, section, header, footer { flex-shrink: 0; }
+
+/* Links inside running prose — gold underline that turns pink on hover. */
+a { color: var(--gold); text-decoration: none; border-bottom: 1px solid transparent; transition: color 0.15s, border-color 0.15s; }
+a:hover { color: var(--weft-pink-deep); border-bottom-color: var(--gold-soft); }
+
+/* Visually-hidden helper for accessible labels. */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* Site footer */
+.site-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--rule);
+  background: var(--paper-2);
+  padding: 28px 40px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.site-footer-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; justify-content: space-between; align-items: center; gap: 24px;
+  flex-wrap: wrap;
+}
+.site-footer-brand { display: flex; align-items: center; gap: 10px; color: var(--warp); font-family: var(--font-serif); font-size: 15px; }
+.site-footer-nav { display: flex; gap: 22px; }
+.site-footer-nav a { color: var(--ink-soft); border: none; }
+.site-footer-nav a:hover { color: var(--warp); }
+.site-footer-meta { font-family: var(--font-mono); font-size: 11px; color: var(--gold); letter-spacing: 1px; }
+
+/* Shared brand mark (reused in strip + footer). */
+.brand-mark {
+  width: 22px; height: 22px; position: relative; flex-shrink: 0; display: inline-block;
+}
+.brand-mark::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--warp); }
+.brand-mark::after  { content: ''; position: absolute; top: 10px; left: 0; right: 0; height: 2px; background: var(--gold); }
+.brand-mark span {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+  width: 7px; height: 7px; background: var(--weft-pink); border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--cream);
+}

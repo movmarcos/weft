@@ -1,0 +1,15 @@
+{
+  "codes": [
+    { "code": 0,  "name": "Success",                 "meaning": "Operation completed without error.",                                                  "next": "—",                                                                                        "severity": "green" },
+    { "code": 1,  "name": "Generic",                 "meaning": "Unclassified error (rare — reserved for unexpected crashes).",                        "next": "Rerun with --log-format json and inspect the stderr output.",                              "severity": "gold"  },
+    { "code": 2,  "name": "ConfigError",             "meaning": "Malformed weft.yaml or missing required environment variable.",                       "next": "Check weft.yaml syntax; echo $WEFT_* to verify env vars.",                                 "severity": "gold"  },
+    { "code": 3,  "name": "AuthError",               "meaning": "AAD token acquisition failed.",                                                       "next": "See /docs/authentication.html — verify SP permissions + cert/secret.",                     "severity": "gold"  },
+    { "code": 4,  "name": "SourceLoadError",         "meaning": "Source .bim or TE folder could not be parsed.",                                       "next": "Run weft validate --source to isolate the load failure.",                                  "severity": "gold"  },
+    { "code": 5,  "name": "TargetReadError",         "meaning": "XMLA read against the live workspace failed.",                                        "next": "Check the workspace URL and SP XMLA Admin rights.",                                        "severity": "gold"  },
+    { "code": 6,  "name": "DiffValidationError",     "meaning": "Plan requires a drop (without --allow-drops) or a history-loss (without allowHistoryLoss).", "next": "Read the error; opt in explicitly only if the change is intentional.",             "severity": "gold"  },
+    { "code": 7,  "name": "TmslExecutionError",      "meaning": "The generated TMSL was rejected by the server.",                                      "next": "Inspect artifacts/*-plan.tmsl and the returned XMLA message.",                             "severity": "gold"  },
+    { "code": 8,  "name": "RefreshError",            "meaning": "Schema deployed successfully but the subsequent refresh failed.",                     "next": "Model is deployed; re-run weft refresh for the stale tables.",                             "severity": "gold"  },
+    { "code": 9,  "name": "PartitionIntegrityError", "meaning": "A partition that existed pre-deploy is missing post-deploy. Safety halt.",            "next": "STOP. Do not retry. Diff artifacts/*-pre-partitions.json vs *-post-partitions.json.",      "severity": "pink"  },
+    { "code": 10, "name": "ParameterError",          "meaning": "A required M parameter had no value from any source.",                                "next": "See /docs/parameters.html — set the value via CLI, env var, or profile YAML.",             "severity": "gold"  }
+  ]
+}

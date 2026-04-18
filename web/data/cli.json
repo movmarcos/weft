@@ -1,0 +1,99 @@
+{
+  "commands": [
+    {
+      "name": "validate",
+      "slug": "validate",
+      "synopsis": "Parse and validate a source model.",
+      "usage": "weft validate --source <path>",
+      "options": [
+        { "flag": "--source, -s", "desc": "Path to source .bim file or Tabular Editor folder.", "required": true }
+      ],
+      "example": "weft validate --source ./model.bim",
+      "exits": "0 on success; 4 on load failure."
+    },
+    {
+      "name": "plan",
+      "slug": "plan",
+      "synopsis": "Compute and print a deploy plan; write TMSL to artifacts (offline, no XMLA).",
+      "usage": "weft plan --source <path> --target-snapshot <path.bim> --artifacts <dir>",
+      "options": [
+        { "flag": "--source, -s",       "desc": "Path to source .bim / TE folder. Optional if set in weft.yaml." },
+        { "flag": "--target-snapshot",  "desc": "Path to a .bim snapshot of the target (offline plan input).", "required": true },
+        { "flag": "--artifacts",        "desc": "Directory where the generated TMSL is written." },
+        { "flag": "--config",           "desc": "Path to weft.yaml (optional)." },
+        { "flag": "--target",           "desc": "Profile name inside weft.yaml." }
+      ],
+      "example": "weft plan --source ./model.bim --target-snapshot ./snapshots/prod.bim --artifacts ./artifacts",
+      "exits": "0 on clean plan; 2 on config error; 4 on load failure; 6 on diff/plan error."
+    },
+    {
+      "name": "deploy",
+      "slug": "deploy",
+      "synopsis": "Deploy a model end-to-end: load → diff → execute TMSL → refresh. Runs every lifecycle hook and writes the receipt.",
+      "usage": "weft deploy --config <weft.yaml> --target <profile>",
+      "options": [
+        { "flag": "--source, -s",       "desc": "Source .bim / TE folder. Overrides weft.yaml." },
+        { "flag": "--workspace",        "desc": "XMLA workspace URL. Overrides profile." },
+        { "flag": "--database",         "desc": "Database name on the workspace." },
+        { "flag": "--artifacts",        "desc": "Directory for TMSL + pre/post manifests + receipt." },
+        { "flag": "--allow-drops",      "desc": "Permit table drops. Required whenever the plan drops any table." },
+        { "flag": "--no-refresh",       "desc": "Execute schema TMSL but skip refresh." },
+        { "flag": "--reset-bookmarks",  "desc": "Clear RefreshBookmark annotations on refreshed tables." },
+        { "flag": "--effective-date",   "desc": "ISO date passed to the refresh engine (for as-of semantics)." },
+        { "flag": "--config",           "desc": "Path to weft.yaml." },
+        { "flag": "--target",           "desc": "Profile name inside weft.yaml." },
+        { "flag": "--auth-mode, --tenant, --client, --client-secret, --cert-*", "desc": "Auth overrides — see Authentication." }
+      ],
+      "example": "weft deploy --config ./weft.yaml --target prod",
+      "exits": "0 on success; 2 config; 3 auth; 4 source; 5 target-read; 6 diff; 7 TMSL; 8 refresh; 9 partition-integrity; 10 parameter."
+    },
+    {
+      "name": "refresh",
+      "slug": "refresh",
+      "synopsis": "Refresh selected tables on a live workspace.",
+      "usage": "weft refresh --workspace <url> --database <name> --tables <t1,t2,...>",
+      "options": [
+        { "flag": "--workspace",     "desc": "XMLA workspace URL (optional with --config + --target)." },
+        { "flag": "--database",      "desc": "Database name (optional with --config + --target)." },
+        { "flag": "--tables",        "desc": "Comma-separated list of table names.", "required": true },
+        { "flag": "--effective-date","desc": "ISO date for as-of refresh semantics." },
+        { "flag": "--config",        "desc": "Path to weft.yaml." },
+        { "flag": "--target",        "desc": "Profile name inside weft.yaml." },
+        { "flag": "--auth-mode, --tenant, --client, --client-secret, --cert-*", "desc": "Auth overrides — see Authentication." }
+      ],
+      "example": "weft refresh --config ./weft.yaml --target prod --tables FactSales,DimDate",
+      "exits": "0 on success; 2 config; 3 auth; 8 refresh error."
+    },
+    {
+      "name": "restore-history",
+      "slug": "restore-history",
+      "synopsis": "Re-materialize historical partitions per the table's RefreshPolicy rolling window.",
+      "usage": "weft restore-history --workspace <url> --database <name> --table <name> [--from ISO] [--to ISO]",
+      "options": [
+        { "flag": "--workspace",     "desc": "XMLA workspace URL (optional with --config + --target)." },
+        { "flag": "--database",      "desc": "Database name (optional with --config + --target)." },
+        { "flag": "--table",         "desc": "Table to restore.", "required": true },
+        { "flag": "--from",          "desc": "Inclusive ISO start date." },
+        { "flag": "--to",            "desc": "Inclusive ISO end date." },
+        { "flag": "--effective-date","desc": "Alias for --to when running as-of." },
+        { "flag": "--config",        "desc": "Path to weft.yaml." },
+        { "flag": "--target",        "desc": "Profile name inside weft.yaml." },
+        { "flag": "--auth-mode, --tenant, --client, --client-secret, --cert-*", "desc": "Auth overrides — see Authentication." }
+      ],
+      "example": "weft restore-history --config ./weft.yaml --target prod --table FactSales --from 2020-01-01 --to 2022-12-31",
+      "exits": "0 on success; 2 config; 3 auth; 8 refresh error."
+    },
+    {
+      "name": "inspect partitions",
+      "slug": "inspect",
+      "synopsis": "List partitions and their RefreshBookmark values from a .bim snapshot (offline).",
+      "usage": "weft inspect partitions --target-snapshot <path.bim> [--table <name>]",
+      "options": [
+        { "flag": "--target-snapshot", "desc": "Path to a .bim snapshot file.", "required": true },
+        { "flag": "--table",           "desc": "Filter output to a single table." }
+      ],
+      "example": "weft inspect partitions --target-snapshot ./snapshots/prod.bim --table FactSales",
+      "exits": "0 on success; 4 if the snapshot cannot be loaded."
+    }
+  ]
+}

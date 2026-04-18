@@ -1,0 +1,64 @@
+/* responsive.css — breakpoints for tablet (<1100px) and mobile (<720px). */
+
+/* TABLET — collapse related rail, keep warp TOC. */
+@media (max-width: 1100px) {
+  .page {
+    grid-template-columns: 180px 1fr;
+    padding: 40px 24px;
+  }
+  .related { display: none; }
+  .hero {
+    padding: 60px 32px 24px;
+    gap: 40px;
+  }
+  .hero h1 { font-size: 52px; }
+  .foot-three { padding: 40px 32px; gap: 32px; }
+  .legend-wrap { padding: 0 32px 32px; gap: 40px; }
+  .samples-grid { grid-template-columns: 1fr; }
+}
+
+/* MOBILE — stack everything, hide warp TOC, hide loom (too tight at this size). */
+@media (max-width: 720px) {
+  .strip {
+    flex-direction: column; gap: 12px; padding: 14px 20px; align-items: flex-start;
+  }
+  .strip-nav { flex-wrap: wrap; gap: 16px; }
+  .strip-version, .strip-search { align-self: flex-start; }
+
+  .weft-bar { padding: 14px 20px; }
+  .thread-line { margin: 22px 20px 28px; }
+  .knot::after { font-size: 9px; }
+
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 40px 20px 24px;
+    gap: 32px;
+  }
+  .hero h1 { font-size: 38px; }
+  .loom-wrap { display: none; }
+
+  .page {
+    grid-template-columns: 1fr;
+    padding: 32px 20px;
+    gap: 32px;
+  }
+  .warp-toc { position: static; display: none; }
+  .content h1 { font-size: 32px; }
+  .content p, .content li { font-size: 16px; }
+
+  .foot-three {
+    grid-template-columns: 1fr; padding: 32px 20px; gap: 32px;
+  }
+
+  .lifecycle-nav { flex-direction: column; }
+
+  .site-footer-inner {
+    flex-direction: column; align-items: flex-start; gap: 12px;
+  }
+
+  .content table, .exit-codes-table, .cli-options {
+    display: block; overflow-x: auto; white-space: nowrap;
+  }
+
+  .samples-grid { grid-template-columns: 1fr; gap: 18px; }
+}

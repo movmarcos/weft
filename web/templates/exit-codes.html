@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Exit codes — Weft</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/assets/css/tokens.css">
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="stylesheet" href="/assets/css/strip.css">
+<link rel="stylesheet" href="/assets/css/doc.css">
+<link rel="stylesheet" href="/assets/css/code.css">
+<link rel="stylesheet" href="/assets/css/responsive.css">
+</head>
+<body>
+
+{{STRIP}}
+{{WEFT_BAR}}
+
+<main class="page">
+  <aside class="warp-toc" aria-label="On this page">
+    <div class="warp-toc-label">&mdash; On this page &mdash;</div>
+    <div class="warp-toc-empty">
+      One table. Color-coded.<br>
+      <span style="color: var(--warp);">&bull;</span> green = success<br>
+      <span style="color: var(--gold);">&bull;</span> gold = recoverable<br>
+      <span style="color: var(--weft-pink);">&bull;</span> pink = safety halt
+    </div>
+  </aside>
+
+  <article class="content">
+    <div class="content-eyebrow">Exit codes &middot; Reference</div>
+    <h1>Exit codes</h1>
+    <p class="lede">
+      Every <code>weft</code> command exits with one of these codes. A non-zero code
+      is a structured signal for CI systems &mdash; the one-line meaning tells you what went
+      wrong, the next step tells you where to look.
+    </p>
+
+    <table class="exit-codes-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Meaning</th>
+          <th>Next step</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{EXIT_CODE_ROWS}}
+      </tbody>
+    </table>
+  </article>
+
+  <aside class="related" aria-label="Related">
+    <div class="related-label">&mdash; See also &mdash;</div>
+    {{RELATED}}
+  </aside>
+</main>
+
+{{FOOTER}}
+
+</body>
+</html>

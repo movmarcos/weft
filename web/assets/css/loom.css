@@ -1,0 +1,165 @@
+/* loom.css — homepage hero + loom grid + tiles + legend + three-up foot. */
+
+.hero {
+  padding: 80px 56px 40px;
+  max-width: 1240px; margin: 0 auto;
+  display: grid; grid-template-columns: 1.1fr 1fr;
+  gap: 64px; align-items: center;
+}
+.hero h1 {
+  font-size: 64px; line-height: 0.95; font-weight: 400;
+  color: var(--warp); letter-spacing: -1.5px;
+}
+.hero h1 em {
+  font-style: italic; color: var(--weft-pink); font-weight: 400;
+}
+.hero .lede {
+  margin-top: 28px; font-size: 19px; line-height: 1.55;
+  color: var(--ink-soft); font-style: italic;
+}
+.hero .lede strong { color: var(--warp); font-weight: 600; font-style: normal; }
+.hero .actions { margin-top: 40px; display: flex; gap: 18px; align-items: center; }
+
+.btn {
+  padding: 13px 22px; border-radius: 2px; font-family: inherit; font-size: 15px;
+  text-decoration: none; transition: all 0.15s;
+  display: inline-block; border: 1px solid transparent;
+}
+.btn-primary { background: var(--warp); color: var(--paper); border-color: var(--warp); }
+.btn-primary:hover { background: var(--weft-pink); border-color: var(--weft-pink); color: var(--paper); }
+.btn-ghost { color: var(--warp); border-color: var(--warp); background: transparent; }
+.btn-ghost:hover { background: var(--warp); color: var(--paper); }
+
+.install-cmd {
+  font-family: var(--font-mono); font-size: 13px;
+  color: var(--ink-soft); padding-left: 20px; border-left: 2px solid var(--gold);
+  margin-top: 28px;
+}
+.install-cmd::before { content: '$ '; color: var(--gold); }
+
+/* LOOM WRAPPER (paper card, double frame, label). */
+.loom-wrap {
+  position: relative; padding: 24px;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(212,164,55,0.04), transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(232,90,156,0.04), transparent 50%),
+    var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 8px 32px rgba(60,40,10,0.08);
+}
+.loom-wrap::before {
+  content: ''; position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
+  border: 1px solid var(--gold-soft); pointer-events: none; opacity: 0.4;
+}
+.loom-label {
+  position: absolute; top: -10px; left: 24px;
+  background: var(--cream); padding: 0 12px;
+  font-family: var(--font-sans);
+  font-size: 10px; letter-spacing: 2.5px; color: var(--gold);
+  text-transform: uppercase; font-weight: 600;
+}
+
+.loom { position: relative; aspect-ratio: 1.05/1; margin-top: 8px; }
+
+/* WARP THREADS (vertical, stable concepts). */
+.warp {
+  position: absolute; top: 0; bottom: 0; width: 2px;
+  background: linear-gradient(to bottom, transparent 0%, var(--warp) 8%, var(--warp) 92%, transparent 100%);
+  opacity: 0.85;
+}
+.warp-soft {
+  position: absolute; top: 0; bottom: 0; width: 1px;
+  background: linear-gradient(to bottom, transparent 0%, var(--warp-soft) 12%, var(--warp-soft) 88%, transparent 100%);
+  opacity: 0.5;
+}
+/* WEFT THREADS (horizontal, lifecycle). */
+.weft-thread {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: linear-gradient(to right, transparent 0%, var(--gold) 8%, var(--gold) 92%, transparent 100%);
+  opacity: 0.7;
+}
+.weft-thread.soft { opacity: 0.45; }
+
+/* TILES — the docs nav. */
+.tile {
+  position: absolute; transform: translate(-50%, -50%);
+  width: 72px; height: 72px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s ease;
+  text-decoration: none; border: none;
+}
+.tile-inner {
+  width: 100%; height: 100%; position: relative;
+  background: var(--paper);
+  border: 2px solid currentColor;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 6px;
+  box-shadow: 0 0 0 4px var(--paper), 0 4px 16px rgba(60,40,10,0.1);
+}
+.tile.pink  { color: var(--weft-pink); }
+.tile.gold  { color: var(--gold); }
+.tile.green { color: var(--warp); }
+.tile-icon {
+  font-family: var(--font-mono);
+  font-size: 18px; font-weight: 600;
+  color: currentColor; line-height: 1;
+}
+.tile-title {
+  font-family: var(--font-sans);
+  font-size: 9px; letter-spacing: 0.6px; color: var(--ink-soft);
+  text-transform: uppercase; line-height: 1.2; margin-top: 4px;
+  font-weight: 600;
+}
+.tile:hover { transform: translate(-50%, -50%) scale(1.12); z-index: 5; }
+.tile:hover .tile-inner { background: currentColor; }
+.tile:hover .tile-icon,
+.tile:hover .tile-title { color: var(--paper); }
+
+/* AXIS LABELS */
+.axis-label {
+  position: absolute;
+  font-family: var(--font-sans);
+  font-size: 10px; letter-spacing: 1.5px; color: var(--ink-soft);
+  text-transform: uppercase; font-weight: 500;
+}
+.axis-warp { writing-mode: vertical-rl; transform: rotate(180deg); left: -40px; top: 20%; }
+.axis-weft { bottom: -28px; left: 50%; transform: translateX(-50%); }
+
+/* LEGEND */
+.legend-wrap {
+  max-width: 1240px; margin: 0 auto;
+  padding: 0 56px 40px;
+  display: grid; grid-template-columns: 1.1fr 1fr; gap: 64px;
+}
+.legend-wrap > :first-child { /* spacer under hero lede */ }
+.legend {
+  display: flex; gap: 28px; padding: 16px 20px;
+  background: var(--paper); border: 1px solid var(--rule);
+  font-family: var(--font-sans); font-size: 12px;
+  color: var(--ink-soft); align-items: center; flex-wrap: wrap;
+}
+.legend-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  display: inline-block; margin-right: 8px; vertical-align: middle;
+}
+
+/* Three-up "why" footer. */
+.foot-three {
+  margin-top: 40px; padding: 56px; max-width: 1240px;
+  margin-left: auto; margin-right: auto;
+  border-top: 1px dashed var(--rule);
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 56px;
+}
+.foot-three h3 {
+  font-family: var(--font-serif); font-weight: 400;
+  color: var(--warp); font-size: 22px;
+  margin-bottom: 12px; letter-spacing: -0.3px;
+}
+.foot-three p { color: var(--ink-soft); line-height: 1.6; font-size: 15px; }
+.foot-three a { color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold-soft); }
+.foot-three a:hover { color: var(--weft-pink-deep); }
+.foot-three code {
+  font-family: var(--font-mono); font-size: 13px;
+  background: var(--gold-tint); color: var(--gold);
+  padding: 1px 6px; border-radius: 2px;
+}

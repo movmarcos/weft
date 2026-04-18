@@ -1,0 +1,102 @@
+/* code.css — cream-paper code block theme + callouts.
+   Overrides Prism's default dark palette to match the Weft doc aesthetic. */
+
+/* Base pre/code block: used both for marked output and Prism-highlighted blocks. */
+pre[class*="language-"],
+.code-block,
+pre.code-block,
+.content pre {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--gold);
+  margin: 22px 0;
+  font-family: var(--font-mono);
+  font-size: 13px; line-height: 1.7;
+  color: var(--ink);
+  padding: 18px 22px;
+  overflow-x: auto;
+  border-radius: 2px;
+  position: relative;
+}
+
+/* Inline code inside pre = no extra styling */
+pre[class*="language-"] code,
+.content pre code {
+  background: transparent; color: inherit;
+  padding: 0; border: 0; border-radius: 0;
+  font-family: var(--font-mono); font-size: 13px;
+}
+
+/* Language tag in the top-right corner */
+.code-block .lang-tag,
+pre[class*="language-"]::before {
+  content: attr(data-lang);
+  position: absolute; top: 8px; right: 12px;
+  font-family: var(--font-sans);
+  font-size: 9px; letter-spacing: 1.5px; color: var(--ink-soft);
+  text-transform: uppercase;
+}
+
+/* Prism token overrides — keyword=warp green, string=pink, comment=italic brown, punctuation=gold */
+.token.keyword,
+.token.builtin,
+.token.class-name,
+.token.tag,
+.token.selector,
+.token.operator.keyword { color: var(--warp); font-weight: 600; }
+
+.token.string,
+.token.attr-value,
+.token.char,
+.token.regex,
+.token.template-string  { color: var(--weft-pink-deep); }
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata            { color: var(--ink-soft); font-style: italic; }
+
+.token.punctuation,
+.token.operator,
+.token.delimiter        { color: var(--gold); }
+
+.token.number,
+.token.boolean,
+.token.constant,
+.token.symbol           { color: var(--weft-pink); }
+
+.token.function,
+.token.property         { color: var(--warp); font-weight: 500; }
+
+.token.attr-name        { color: var(--gold); }
+
+.token.important        { color: var(--weft-pink-deep); font-weight: 700; }
+
+/* ========== CALLOUTS — GitHub-style admonitions ========== */
+.callout {
+  margin: 28px 0; padding: 18px 22px; border-radius: 2px;
+  border-left: 3px solid var(--weft-pink);
+  background: var(--weft-pink-tint);
+  position: relative;
+}
+.callout.callout-tip,
+.callout.callout-note { border-left-color: var(--gold); background: var(--gold-tint); }
+.callout.callout-warning,
+.callout.callout-caution,
+.callout.callout-important { border-left-color: var(--weft-pink); background: var(--weft-pink-tint); }
+
+.callout-label {
+  font-family: var(--font-sans);
+  font-size: 10px; letter-spacing: 2px;
+  color: var(--weft-pink-deep);
+  text-transform: uppercase; font-weight: 700;
+  margin-bottom: 6px;
+}
+.callout.callout-tip .callout-label,
+.callout.callout-note .callout-label { color: var(--gold); }
+.callout p {
+  font-family: var(--font-serif);
+  font-size: 15px; line-height: 1.55; margin-bottom: 0;
+  color: var(--ink);
+}
+.callout p + p { margin-top: 10px; }

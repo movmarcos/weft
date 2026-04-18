@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>{{TITLE}} — Weft</title>
+<title>CLI reference — Weft</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="/assets/css/tokens.css">
 <link rel="stylesheet" href="/assets/css/site.css">
@@ -17,26 +17,27 @@
 {{WEFT_BAR}}
 
 <main class="page">
-  <aside class="warp-toc" aria-label="On this page">
-    <div class="warp-toc-label">&mdash; On this page &mdash;</div>
+  <aside class="warp-toc" aria-label="Commands">
+    <div class="warp-toc-label">&mdash; Commands &mdash;</div>
     {{WARP_TOC}}
   </aside>
 
   <article class="content">
-    <div class="content-eyebrow">{{EYEBROW}}</div>
-    <h1>{{TITLE}}</h1>
-    {{CONTENT}}
+    <div class="content-eyebrow">CLI &middot; Reference</div>
+    <h1>CLI reference</h1>
+    <p class="lede">
+      Six commands. All share a common auth surface (<code>--config</code> + <code>--target</code>
+      or the full set of cert/secret/interactive flags). All exit with one of
+      <a href="/exit-codes/">eleven codes</a>.
+    </p>
+
+    {{CLI_COMMANDS}}
   </article>
 
   <aside class="related" aria-label="Related">
-    <div class="related-label">&mdash; Pull a related thread &mdash;</div>
+    <div class="related-label">&mdash; See also &mdash;</div>
     {{RELATED}}
   </aside>
-
-  <nav class="lifecycle-nav" aria-label="Lifecycle">
-    {{PREV_LINK}}
-    {{NEXT_LINK}}
-  </nav>
 </main>
 
 {{FOOTER}}

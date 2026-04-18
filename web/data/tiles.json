@@ -1,0 +1,18 @@
+{
+  "tiles": [
+    { "slug": "getting-started", "row": 1, "col": 1, "color": "gold",  "icon": "↦", "label": "Get Started" },
+    { "slug": "cli",             "row": 1, "col": 3, "color": "green", "icon": "⌘", "label": "CLI Ref" },
+    { "slug": "authentication",  "row": 1, "col": 5, "color": "green", "icon": "↯", "label": "Auth" },
+    { "slug": "samples",         "row": 1, "col": 7, "color": "gold",  "icon": "⊟", "label": "Samples" },
+    { "slug": "parameters",      "row": 2, "col": 2, "color": "green", "icon": "{ }", "label": "Parameters" },
+    { "slug": "partition-preservation", "row": 2, "col": 4, "color": "pink", "icon": "▦", "label": "Partitions" },
+    { "slug": "incremental-refresh",    "row": 2, "col": 6, "color": "pink", "icon": "↻", "label": "Incremental" },
+    { "slug": "hooks",           "row": 3, "col": 1, "color": "gold", "icon": "⚓", "label": "Hooks" },
+    { "slug": "restore-history", "row": 3, "col": 3, "color": "pink", "icon": "⤴", "label": "Restore" },
+    { "slug": "troubleshooting", "row": 3, "col": 7, "color": "pink", "icon": "!",  "label": "Trouble" },
+    { "slug": "exit-codes",      "row": 4, "col": 2, "color": "gold", "icon": "№", "label": "Exit Codes" },
+    { "slug": "architecture",    "row": 4, "col": 5, "color": "green", "icon": "⊜", "label": "Architecture" }
+  ],
+  "rowPercents": [18, 42, 66, 88],
+  "colPercents": [14, 26, 38, 50, 62, 74, 86]
+}

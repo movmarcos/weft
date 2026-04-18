@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>{{TITLE}} — Weft</title>
+<title>Samples — Weft</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="/assets/css/tokens.css">
 <link rel="stylesheet" href="/assets/css/site.css">
@@ -17,26 +17,27 @@
 {{WEFT_BAR}}
 
 <main class="page">
-  <aside class="warp-toc" aria-label="On this page">
-    <div class="warp-toc-label">&mdash; On this page &mdash;</div>
+  <aside class="warp-toc" aria-label="Samples">
+    <div class="warp-toc-label">&mdash; Samples &mdash;</div>
     {{WARP_TOC}}
   </aside>
 
   <article class="content">
-    <div class="content-eyebrow">{{EYEBROW}}</div>
-    <h1>{{TITLE}}</h1>
-    {{CONTENT}}
+    <div class="content-eyebrow">Samples &middot; End-to-end</div>
+    <h1>Sample projects</h1>
+    <p class="lede">
+      Four runnable projects that exercise Weft from the simplest <code>.bim</code>
+      up to a full pipeline with cert auth and hooks.
+    </p>
+    <div class="samples-grid">
+      {{SAMPLE_CARDS}}
+    </div>
   </article>
 
   <aside class="related" aria-label="Related">
     <div class="related-label">&mdash; Pull a related thread &mdash;</div>
     {{RELATED}}
   </aside>
-
-  <nav class="lifecycle-nav" aria-label="Lifecycle">
-    {{PREV_LINK}}
-    {{NEXT_LINK}}
-  </nav>
 </main>
 
 {{FOOTER}}

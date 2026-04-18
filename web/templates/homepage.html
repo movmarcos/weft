@@ -4,13 +4,87 @@
 <meta charset="utf-8">
 <title>Weft — diff-based Power BI deploys</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Weft deploys Power BI models without losing partitions. Diff-based TMSL, history-loss gate, five auth modes.">
 <link rel="stylesheet" href="/assets/css/tokens.css">
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="stylesheet" href="/assets/css/strip.css">
+<link rel="stylesheet" href="/assets/css/loom.css">
+<link rel="stylesheet" href="/assets/css/code.css">
+<link rel="stylesheet" href="/assets/css/responsive.css">
 </head>
 <body>
-<!-- STRIP partial — Pass 2 -->
-<section style="max-width: 1240px; margin: 0 auto; padding: 80px 40px;">
-  <h1 style="font-size: 64px; line-height: 0.95; font-weight: 400; color: var(--warp); letter-spacing: -1.5px;">Weft — Pass 1 placeholder</h1>
-  <p style="margin-top: 28px; font-size: 19px; color: var(--ink-soft);">Pass 2 will replace this with the full loom design.</p>
+
+{{STRIP}}
+
+<section class="hero">
+  <div class="hero-copy">
+    <h1>Deploy Power&nbsp;BI<br>without losing<br>your <em>partitions.</em></h1>
+    <p class="lede">
+      Weft compares your <strong>.bim</strong> source against the live target and emits
+      a surgical TMSL that <strong>preserves every partition</strong> created by your
+      refresh policies. No more month-long rematerializations.
+    </p>
+    <div class="actions">
+      <a href="/docs/getting-started.html" class="btn btn-primary">Get started</a>
+      <a href="/docs/partition-preservation.html" class="btn btn-ghost">Why Weft?</a>
+    </div>
+    <div class="install-cmd">brew install marcosmagri/tap/weft</div>
+  </div>
+
+  <!-- THE LOOM -->
+  <div class="loom-wrap" aria-label="Docs nav grid">
+    <div class="loom-label">&mdash; pull a thread &mdash;</div>
+
+    <div class="axis-label axis-warp">CONCEPTS &middot; STABLE</div>
+    <div class="axis-label axis-weft">LIFECYCLE &middot; HOW A DEPLOY FLOWS &rarr;</div>
+
+    <div class="loom">
+      {{WARP_THREADS}}
+      {{WEFT_THREADS}}
+      {{TILES}}
+    </div>
+  </div>
 </section>
+
+<div class="legend-wrap">
+  <div></div>
+  <div class="legend">
+    <span><span class="legend-dot" style="background: var(--gold);"></span>Practical guides</span>
+    <span><span class="legend-dot" style="background: var(--warp);"></span>Reference</span>
+    <span><span class="legend-dot" style="background: var(--weft-pink);"></span>Safety-critical</span>
+  </div>
+</div>
+
+<section class="foot-three">
+  <div>
+    <h3>Why Weft?</h3>
+    <p>
+      The default Power BI deploy is <em>destructive</em> &mdash; it replaces your model
+      and wipes every partition your refresh policy materialized. Weft does
+      a three-way diff and only touches what changed.
+      <a href="/docs/partition-preservation.html">Read the rationale &rarr;</a>
+    </p>
+  </div>
+  <div>
+    <h3>Built for ops</h3>
+    <p>
+      Five auth modes (cert + secret + interactive). YAML config with
+      per-environment profiles. Hooks at six lifecycle phases. History-loss
+      gate that refuses to silently drop years of data.
+      <a href="/docs/hooks.html">See the hooks guide &rarr;</a>
+    </p>
+  </div>
+  <div>
+    <h3>Open, MIT, .NET 10</h3>
+    <p>
+      Cross-platform CLI plus a <code>Weft.Core</code> NuGet for embedding.
+      GitHub Actions, TeamCity, Octopus templates included.
+      <a href="https://github.com/marcosmagri/PowerBIAutomationDeploy" rel="noopener">Browse the source &rarr;</a>
+    </p>
+  </div>
+</section>
+
+{{FOOTER}}
+
 </body>
 </html>
