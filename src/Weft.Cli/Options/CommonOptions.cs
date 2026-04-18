@@ -56,4 +56,10 @@ public static class CommonOptions
 
     public static Option<string?> CertThumbprintOption() =>
         new("--cert-thumbprint") { Description = "(cert-store mode) Cert thumbprint (or env: WEFT_CERT_THUMBPRINT)." };
+
+    public static Option<string?> ConfigFileOption() =>
+        new("--config") { Description = "Path to weft.yaml (optional; falls back to CLI flags)." };
+
+    public static Option<string?> TargetProfileOption() =>
+        new("--target") { Description = "Profile name in weft.yaml." };
 }
