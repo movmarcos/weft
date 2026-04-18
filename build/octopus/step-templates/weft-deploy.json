@@ -1,0 +1,85 @@
+{
+  "Id": "weft-deploy-step-template",
+  "Name": "Weft — Deploy Power BI Model",
+  "Description": "Runs `weft deploy` with the given config and target profile. Binds project variables named WeftParam.* to WEFT_PARAM_* env vars before spawning.",
+  "ActionType": "Octopus.Script",
+  "Version": 1,
+  "Properties": {
+    "Octopus.Action.Script.Syntax": "Bash",
+    "Octopus.Action.Script.ScriptBody": "#!/usr/bin/env bash\nset -euo pipefail\n\nexport WEFT_TENANT_ID=\"#{WeftTenantId}\"\nexport WEFT_SP_CLIENT_ID=\"#{WeftSpClientId}\"\nexport WEFT_CERT_THUMBPRINT=\"#{WeftCertThumbprint}\"\n\n# Map every project variable named WeftParam.* → WEFT_PARAM_*\nfor VAR in $(compgen -v | grep '^WeftParam_'); do\n  PARAM_NAME=\"${VAR#WeftParam_}\"\n  PARAM_VALUE=\"${!VAR}\"\n  export \"WEFT_PARAM_${PARAM_NAME}=${PARAM_VALUE}\"\ndone\n\nEXTRA_FLAGS=\"\"\nif [ \"#{WeftAllowDrops}\" = \"True\" ]; then EXTRA_FLAGS=\"$EXTRA_FLAGS --allow-drops\"; fi\nif [ \"#{WeftNoRefresh}\" = \"True\" ]; then EXTRA_FLAGS=\"$EXTRA_FLAGS --no-refresh\"; fi\nif [ \"#{WeftResetBookmarks}\" = \"True\" ]; then EXTRA_FLAGS=\"$EXTRA_FLAGS --reset-bookmarks\"; fi\n\nweft deploy \\\n  --config \"#{WeftConfigFile}\" \\\n  --target \"#{WeftTargetProfile}\" \\\n  --artifacts \"#{WeftArtifactsDir}\" \\\n  --log-format json \\\n  $EXTRA_FLAGS\n"
+  },
+  "Parameters": [
+    {
+      "Id": "weft-tenant-id",
+      "Name": "WeftTenantId",
+      "Label": "Tenant ID",
+      "HelpText": "AAD tenant GUID.",
+      "DefaultValue": "",
+      "DisplaySettings": { "Octopus.ControlType": "SingleLineText" }
+    },
+    {
+      "Id": "weft-sp-client-id",
+      "Name": "WeftSpClientId",
+      "Label": "Service Principal Client ID",
+      "HelpText": "AAD app registration (client) ID.",
+      "DefaultValue": "",
+      "DisplaySettings": { "Octopus.ControlType": "SingleLineText" }
+    },
+    {
+      "Id": "weft-cert-thumbprint",
+      "Name": "WeftCertThumbprint",
+      "Label": "Certificate Thumbprint",
+      "HelpText": "Thumbprint of the .pfx installed in the Octopus Tentacle's LocalMachine\\My store.",
+      "DefaultValue": "",
+      "DisplaySettings": { "Octopus.ControlType": "Sensitive" }
+    },
+    {
+      "Id": "weft-config-file",
+      "Name": "WeftConfigFile",
+      "Label": "Config File",
+      "HelpText": "Path to weft.yaml (relative to the deployment working dir).",
+      "DefaultValue": "weft.yaml",
+      "DisplaySettings": { "Octopus.ControlType": "SingleLineText" }
+    },
+    {
+      "Id": "weft-target-profile",
+      "Name": "WeftTargetProfile",
+      "Label": "Target Profile",
+      "HelpText": "Profile name from weft.yaml (e.g. dev, uat, prod). Defaults to the Octopus environment name.",
+      "DefaultValue": "#{Octopus.Environment.Name}",
+      "DisplaySettings": { "Octopus.ControlType": "SingleLineText" }
+    },
+    {
+      "Id": "weft-artifacts-dir",
+      "Name": "WeftArtifactsDir",
+      "Label": "Artifacts Directory",
+      "HelpText": "Where Weft writes plan / pre-manifest / post-manifest / receipt JSON.",
+      "DefaultValue": "./artifacts",
+      "DisplaySettings": { "Octopus.ControlType": "SingleLineText" }
+    },
+    {
+      "Id": "weft-allow-drops",
+      "Name": "WeftAllowDrops",
+      "Label": "Allow Drops",
+      "HelpText": "Pass --allow-drops. Requires matching profile.allowDrops=true in weft.yaml.",
+      "DefaultValue": "False",
+      "DisplaySettings": { "Octopus.ControlType": "Checkbox" }
+    },
+    {
+      "Id": "weft-no-refresh",
+      "Name": "WeftNoRefresh",
+      "Label": "Skip Refresh",
+      "HelpText": "Pass --no-refresh. Deploy schema but skip refresh.",
+      "DefaultValue": "False",
+      "DisplaySettings": { "Octopus.ControlType": "Checkbox" }
+    },
+    {
+      "Id": "weft-reset-bookmarks",
+      "Name": "WeftResetBookmarks",
+      "Label": "Reset Bookmarks",
+      "HelpText": "Pass --reset-bookmarks. Forces full re-check against source on next refresh.",
+      "DefaultValue": "False",
+      "DisplaySettings": { "Octopus.ControlType": "Checkbox" }
+    }
+  ]
+}
