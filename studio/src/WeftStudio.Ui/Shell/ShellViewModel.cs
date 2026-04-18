@@ -10,6 +10,7 @@ using WeftStudio.App.Persistence;
 using WeftStudio.Ui.DaxEditor;
 using WeftStudio.Ui.Explorer;
 using WeftStudio.Ui.Inspector;
+using WeftStudio.Ui.Settings;
 
 namespace WeftStudio.Ui.Shell;
 
@@ -17,6 +18,8 @@ public enum ActivityMode { Explorer, Diagram, Diff, Search }
 
 public sealed class ShellViewModel : ReactiveObject
 {
+    private readonly SettingsStore _store = new(SettingsStore.DefaultDirectory);
+
     private ActivityMode _activeMode = ActivityMode.Explorer;
     private ExplorerViewModel? _explorer;
     private DaxEditorViewModel? _activeTab;
@@ -73,6 +76,12 @@ public sealed class ShellViewModel : ReactiveObject
     {
         var session = ModelSession.OpenBim(bimPath);
         Explorer = new ExplorerViewModel(session);
+
+        var s = _store.Load();
+        s.RecentFiles.Remove(bimPath);
+        s.RecentFiles.Insert(0, bimPath);
+        if (s.RecentFiles.Count > 10) s.RecentFiles.RemoveRange(10, s.RecentFiles.Count - 10);
+        _store.Save(s);
     }
 
     public void OpenMeasure(string tableName, string measureName)
