@@ -270,8 +270,10 @@ public static class DeployCommand
                 if (tablesToClear.Count > 0)
                 {
                     var clearTmsl = new BookmarkClearer().BuildTmsl(postDb, tablesToClear);
+                    using var clearTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    clearTimeoutCts.CancelAfter(TimeSpan.FromMinutes(profile.TimeoutMinutes));
                     var clearRes = await executor.ExecuteAsync(
-                        profile.WorkspaceUrl, profile.DatabaseName, token, clearTmsl, cancellationToken);
+                        profile.WorkspaceUrl, profile.DatabaseName, token, clearTmsl, clearTimeoutCts.Token);
                     if (!clearRes.Success)
                     {
                         await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet, writer);
@@ -282,9 +284,12 @@ public static class DeployCommand
             }
 
             var req = new RefreshRequest(profile.WorkspaceUrl, profile.DatabaseName, token, plan.ChangeSet, profile.EffectiveDate);
+            using var refreshTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            refreshTimeoutCts.CancelAfter(TimeSpan.FromMinutes(profile.TimeoutMinutes));
+
             var rrx = await refreshRunner.RefreshAsync(req,
                 progress: new Progress<string>(line => writer.Info(line)),
-                cancellationToken: cancellationToken);
+                cancellationToken: refreshTimeoutCts.Token);
             if (!rrx.Success)
             {
                 await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet, writer);

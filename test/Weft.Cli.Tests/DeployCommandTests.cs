@@ -37,7 +37,8 @@ public class DeployCommandTests
             ParameterValues: new Dictionary<string, object?>(),
             ParameterCliOverrides: null,
             ParameterDeclarations: Array.Empty<Weft.Core.Parameters.ParameterDeclaration>(),
-            Hooks: new Weft.Config.HooksConfigSection(null, null, null, null, null, null));
+            Hooks: new Weft.Config.HooksConfigSection(null, null, null, null, null, null),
+            TimeoutMinutes: 60);
 
     [Fact]
     public async Task Happy_path_returns_zero_and_writes_pre_post_manifests_and_receipt()

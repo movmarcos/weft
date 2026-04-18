@@ -50,7 +50,8 @@ public class EndToEndDeployTests
                 ParameterValues: new Dictionary<string, object?>(),
                 ParameterCliOverrides: null,
                 ParameterDeclarations: Array.Empty<Weft.Core.Parameters.ParameterDeclaration>(),
-                Hooks: new Weft.Config.HooksConfigSection(null, null, null, null, null, null));
+                Hooks: new Weft.Config.HooksConfigSection(null, null, null, null, null, null),
+                TimeoutMinutes: 60);
 
             var exit = await DeployCommand.RunAsync(
                 profile,

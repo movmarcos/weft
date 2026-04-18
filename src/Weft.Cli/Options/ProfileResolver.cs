@@ -23,7 +23,8 @@ public sealed record ResolvedProfile(
     IReadOnlyDictionary<string, object?> ParameterValues,
     IReadOnlyDictionary<string, string>? ParameterCliOverrides,
     IReadOnlyList<ParameterDeclaration> ParameterDeclarations,
-    HooksConfigSection Hooks);
+    HooksConfigSection Hooks,
+    int TimeoutMinutes);
 
 public static class ProfileResolver
 {
@@ -123,7 +124,8 @@ public static class ProfileResolver
             ParameterValues: effective.Parameters,
             ParameterCliOverrides: cliParameters,
             ParameterDeclarations: config?.Parameters ?? Array.Empty<ParameterDeclaration>(),
-            Hooks: effective.Hooks);
+            Hooks: effective.Hooks,
+            TimeoutMinutes: effective.TimeoutMinutes);
     }
 
     private static AuthOptions BuildAuthOptionsFromSection(
