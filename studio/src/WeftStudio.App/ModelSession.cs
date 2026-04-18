@@ -10,13 +10,15 @@ public sealed class ModelSession
 {
     public Database Database { get; }
     public string? SourcePath { get; }
+    public bool ReadOnly { get; }
     public bool IsDirty => ChangeTracker.HasUncommittedCommands;
     public ChangeTracker ChangeTracker { get; }
 
-    internal ModelSession(Database db, string? sourcePath)
+    internal ModelSession(Database db, string? sourcePath, bool readOnly = false)
     {
         Database = db;
         SourcePath = sourcePath;
+        ReadOnly = readOnly;
         ChangeTracker = new ChangeTracker();
     }
 
@@ -24,6 +26,6 @@ public sealed class ModelSession
     {
         var loader = new BimFileLoader();
         var database = loader.Load(path);
-        return new ModelSession(database, path);
+        return new ModelSession(database, path, readOnly: false);
     }
 }
