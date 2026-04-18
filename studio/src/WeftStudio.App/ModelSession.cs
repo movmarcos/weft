@@ -13,7 +13,7 @@ public sealed class ModelSession
     public bool IsDirty => ChangeTracker.HasUncommittedCommands;
     public ChangeTracker ChangeTracker { get; }
 
-    private ModelSession(Database db, string? sourcePath)
+    internal ModelSession(Database db, string? sourcePath)
     {
         Database = db;
         SourcePath = sourcePath;

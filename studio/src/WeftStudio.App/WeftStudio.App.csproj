@@ -2,4 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Weft.Core\Weft.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="WeftStudio.App.Tests" />
+  </ItemGroup>
 </Project>
