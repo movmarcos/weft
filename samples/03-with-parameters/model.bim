@@ -1,0 +1,40 @@
+{
+  "name": "ParameterizedModel",
+  "compatibilityLevel": 1600,
+  "model": {
+    "culture": "en-US",
+    "expressions": [
+      {
+        "name": "DatabaseName",
+        "kind": "m",
+        "expression": "\"EDW\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]",
+        "annotations": [
+          { "name": "IsParameterQuery", "value": "true" }
+        ]
+      },
+      {
+        "name": "ServerName",
+        "kind": "m",
+        "expression": "\"localhost\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]",
+        "annotations": [
+          { "name": "IsParameterQuery", "value": "true" }
+        ]
+      }
+    ],
+    "tables": [
+      {
+        "name": "DimDate",
+        "columns": [
+          { "name": "Date", "dataType": "dateTime", "sourceColumn": "Date" }
+        ],
+        "partitions": [
+          {
+            "name": "DimDate",
+            "mode": "import",
+            "source": { "type": "m", "expression": "let Source = #table({\"Date\"}, {{#date(2025,1,1)}}) in Source" }
+          }
+        ]
+      }
+    ]
+  }
+}
