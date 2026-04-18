@@ -488,6 +488,9 @@ artifacts/
 web/dist/
 web/node_modules/
 
+# Superpowers / local agent scratch
+.superpowers/
+
 # macOS / iCloud Drive duplicate files. iCloud occasionally creates "* 2.ext"
 # copies of files that get rewritten quickly (build outputs in obj/, bin/).
 # Keep them out of git so they don't get committed by accident.
