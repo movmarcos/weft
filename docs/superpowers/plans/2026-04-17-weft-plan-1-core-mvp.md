@@ -137,7 +137,7 @@ Create `LICENSE` with the standard MIT text, copyright "Marcos Magri / Weft cont
 - [ ] **Step 5: Create empty solution**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet new sln -n weft
 ```
 
@@ -186,7 +186,7 @@ Re-evaluate when TOM bumps its own MSAL floor past 4.83.x.
 - [ ] **Step 3: Add to solution**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet sln add src/Weft.Core/Weft.Core.csproj
 dotnet build
 ```
@@ -252,7 +252,7 @@ public class SanityTests
 - [ ] **Step 4: Run + commit**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet sln add test/Weft.Core.Tests/Weft.Core.Tests.csproj
 dotnet test
 ```
@@ -2560,7 +2560,7 @@ git commit -m "feat(core): public WeftCore.Plan(source, target) façade"
 - [ ] **Step 1: Full clean test pass**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet clean
 dotnet build  /warnaserror
 dotnet test

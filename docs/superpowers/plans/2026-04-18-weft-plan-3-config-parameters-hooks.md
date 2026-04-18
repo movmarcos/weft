@@ -129,7 +129,7 @@ weft/
 - [ ] **Step 1: New library + test project**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 mkdir -p src/Weft.Config test/Weft.Config.Tests
 
 cd src/Weft.Config
@@ -179,7 +179,7 @@ Replace `test/Weft.Config.Tests/Weft.Config.Tests.csproj`:
 - [ ] **Step 3: Add both to solution + build**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet sln add src/Weft.Config/Weft.Config.csproj test/Weft.Config.Tests/Weft.Config.Tests.csproj
 dotnet build
 ```
@@ -2456,7 +2456,7 @@ private static AuthOptions BuildAuthOptionsFromSection(
 
 Add a `Weft.Config` project reference to `Weft.Cli`:
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet add src/Weft.Cli/Weft.Cli.csproj reference src/Weft.Config/Weft.Config.csproj
 ```
 
@@ -3047,7 +3047,7 @@ git commit -m "test(cli): end-to-end deploy via weft.yaml + target profile"
 - [ ] **Step 1: Full pipeline**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet clean
 dotnet build -warnaserror
 dotnet test

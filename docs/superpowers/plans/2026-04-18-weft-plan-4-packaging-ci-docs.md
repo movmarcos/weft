@@ -154,7 +154,7 @@ Replace the identical pattern with the same two changes.
 - [ ] **Step 5: Build + test**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet build
 dotnet test
 ```
@@ -711,7 +711,7 @@ Add to `src/Weft.Core/Weft.Core.csproj` inside the `<Project>` root:
 - [ ] **Step 2: Verify pack works locally**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet pack src/Weft.Core/Weft.Core.csproj --configuration Release --output /tmp/nupkgs /p:Version=0.0.1-preview
 ls /tmp/nupkgs/
 ```
@@ -2508,7 +2508,7 @@ git commit -m "ci(octopus): step templates for weft deploy + weft refresh"
 - [ ] **Step 1: Full clean build + test**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet clean
 dotnet build -warnaserror
 dotnet test

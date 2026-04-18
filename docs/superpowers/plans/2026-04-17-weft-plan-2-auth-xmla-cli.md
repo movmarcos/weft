@@ -243,7 +243,7 @@ public interface IPartitionManifestStore
 - [ ] **Step 7: Build + commit**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet build
 ```
 Expected: 0 warnings, 0 errors. Tests still 41 passing (no test changes).
@@ -263,7 +263,7 @@ git commit -m "feat(core): add Abstractions for Auth/XMLA/Refresh/ManifestStore"
 - [ ] **Step 1: New library**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 mkdir -p src/Weft.Auth
 cd src/Weft.Auth
 dotnet new classlib -o . --force
@@ -285,7 +285,7 @@ Replace contents of `src/Weft.Auth/Weft.Auth.csproj` with:
 - [ ] **Step 3: Add to solution + build**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet sln add src/Weft.Auth/Weft.Auth.csproj
 dotnet build
 ```
@@ -391,7 +391,7 @@ Edit `test/Weft.Auth.Tests/Weft.Auth.Tests.csproj`:
 ```
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet sln add test/Weft.Auth.Tests/Weft.Auth.Tests.csproj
 ```
 
@@ -525,7 +525,7 @@ git commit -m "feat(auth): AuthOptionsValidator + Weft.Auth.Tests project"
 - [ ] **Step 1: Generate test certificate**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy/test/Weft.Auth.Tests
+cd /Users/marcosmagri/Documents/MUFG/weft/test/Weft.Auth.Tests
 mkdir -p fixtures
 echo 'WeftTestCertPwd!2026' > fixtures/test-cert.password.txt
 openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
@@ -1029,7 +1029,7 @@ rm -f Class1.cs
 - [ ] **Step 3: Add to solution + build + commit**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet sln add src/Weft.Xmla/Weft.Xmla.csproj
 dotnet build
 git add src/Weft.Xmla/ weft.sln
@@ -1071,7 +1071,7 @@ rm -f UnitTest1.cs
 ```
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet sln add test/Weft.Xmla.Tests/Weft.Xmla.Tests.csproj
 ```
 
@@ -1878,7 +1878,7 @@ public class ExitCodesTests
 - [ ] **Step 5: Build + sln + test + commit**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet sln add src/Weft.Cli/Weft.Cli.csproj test/Weft.Cli.Tests/Weft.Cli.Tests.csproj
 dotnet build
 dotnet test --filter FullyQualifiedName~ExitCodesTests
@@ -3236,7 +3236,7 @@ rm -f UnitTest1.cs
 ```
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet sln add test/Weft.Integration.Tests/Weft.Integration.Tests.csproj
 ```
 
@@ -3499,7 +3499,7 @@ git commit -m "fix(core): plan-1 carry-overs (policy-comparer subclass guard, sy
 - [ ] **Step 1: Full pipeline**
 
 ```bash
-cd /Users/marcosmagri/Documents/MUFG/PowerBIAutomationDeploy
+cd /Users/marcosmagri/Documents/MUFG/weft
 dotnet clean
 dotnet build -warnaserror
 dotnet test
