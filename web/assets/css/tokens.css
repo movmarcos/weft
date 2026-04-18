@@ -1,24 +1,39 @@
 :root {
-  --cream: #fefcf7;
-  --paper: #fffefa;
-  --paper-2: #fdf9ed;
-  --warp: #1a4d2e;
-  --warp-soft: #4a8c5a;
-  --weft-pink: #e85a9c;
-  --weft-pink-deep: #b8389a;
-  --weft-pink-tint: #fce8f0;
-  --gold: #d4a437;
-  --gold-soft: #e8c573;
-  --gold-tint: #fbf1d6;
-  --ink: #2a2a2a;
-  --ink-soft: #5a5040;
-  --rule: #e8dfc8;
+  /* Surfaces — pure white as requested */
+  --cream: #ffffff;
+  --paper: #ffffff;
+  --paper-2: #fafafa;
+
+  /* Green family — primary structural color (warp threads, headings, brand) */
+  --warp: #1a6e3e;
+  --warp-soft: #4a9c5e;
+  --warp-deep: #0e3d22;
+  --warp-tint: #e6f3ec;
+
+  /* Orange family — accent color, replaces the old pink AND gold roles
+     (weft threads, current state, safety-critical, links, italics) */
+  --weft-pink: #e8771c;        /* legacy name; now orange */
+  --weft-pink-deep: #c25e0a;
+  --weft-pink-tint: #fff0e1;
+  --gold: #e8771c;             /* legacy name; same orange */
+  --gold-soft: #f5a05a;
+  --gold-tint: #fff0e1;
+
+  /* Text — black on white as requested */
+  --ink: #0a0a0a;
+  --ink-soft: #555555;
+  --rule: #e5e5e5;
 
   --font-serif: 'Iowan Old Style', Georgia, 'Times New Roman', serif;
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { background: var(--cream); color: var(--ink); font-family: var(--font-serif); -webkit-font-smoothing: antialiased; }
-a { color: var(--gold); text-decoration: none; }
+html, body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--weft-pink); text-decoration: none; }
 a:hover { color: var(--weft-pink-deep); }
