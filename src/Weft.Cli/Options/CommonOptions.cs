@@ -20,7 +20,6 @@ public static class CommonOptions
     public static Option<string> ArtifactsOption() =>
         new("--artifacts") { Description = "Directory for plan/manifest/receipt JSON.", DefaultValueFactory = _ => "./artifacts" };
 
-    /// <summary>Reserved for Plan 3; commands currently write directly to Console.</summary>
     public static Option<string> LogFormatOption() =>
         new("--log-format") { Description = "human | json", DefaultValueFactory = _ => "human" };
 

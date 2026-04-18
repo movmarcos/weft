@@ -5,7 +5,6 @@ using System.Text.Json;
 
 namespace Weft.Cli.Output;
 
-// Wired into commands in Plan 3.
 public sealed class JsonConsoleWriter : IConsoleWriter
 {
     public void Info(string message)  => Emit("info", message);

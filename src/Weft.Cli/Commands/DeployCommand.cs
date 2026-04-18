@@ -6,6 +6,7 @@ using System.Text.Json;
 using Weft.Auth;
 using Weft.Cli.Auth;
 using Weft.Cli.Options;
+using Weft.Cli.Output;
 using Weft.Config;
 using Weft.Core;
 using Weft.Core.Abstractions;
@@ -39,6 +40,7 @@ public static class DeployCommand
         var certPath  = CommonOptions.CertPathOption();
         var certPwd   = CommonOptions.CertPasswordOption();
         var certThumb = CommonOptions.CertThumbprintOption();
+        var logFormatOpt = CommonOptions.LogFormatOption();
 
         var configOpt = new Option<string?>("--config") { Description = "Path to weft.yaml." };
         var targetOpt = new Option<string?>("--target") { Description = "Profile name in weft.yaml." };
@@ -50,6 +52,7 @@ public static class DeployCommand
             cmd.Options.Add(o);
         cmd.Options.Add(configOpt);
         cmd.Options.Add(targetOpt);
+        cmd.Options.Add(logFormatOpt);
 
         cmd.SetAction(async (parse, ct) =>
         {
@@ -93,6 +96,11 @@ public static class DeployCommand
                 return ExitCodes.ConfigError;
             }
 
+            var logFormat = parse.GetValue(logFormatOpt) ?? "human";
+            IConsoleWriter writer = logFormat.Equals("json", StringComparison.OrdinalIgnoreCase)
+                ? new JsonConsoleWriter()
+                : new HumanConsoleWriter();
+
             var innerAuth = AuthProviderFactory.Create(profile.Auth);
             var tokenMgr = new TokenManager(innerAuth, TimeSpan.FromMinutes(30));
             var sharedExecutor = new XmlaExecutor();
@@ -104,7 +112,8 @@ public static class DeployCommand
                 sharedExecutor,
                 new RefreshRunner(sharedExecutor),
                 new FilePartitionManifestStore(),
-                ct);
+                ct,
+                writer);
         });
         return cmd;
     }
@@ -116,17 +125,20 @@ public static class DeployCommand
         IXmlaExecutor executor,
         IRefreshRunner refreshRunner,
         IPartitionManifestStore manifestStore,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IConsoleWriter? writer = null)
     {
+        writer ??= new HumanConsoleWriter();
+
         // 1. Auth
         AccessToken token;
         try { token = await auth.GetTokenAsync(cancellationToken); }
-        catch (Exception ex) { Console.Error.WriteLine($"Auth failed: {ex.Message}"); return ExitCodes.AuthError; }
+        catch (Exception ex) { writer.Error($"Auth failed: {ex.Message}"); return ExitCodes.AuthError; }
 
         // 2. Load source
         Microsoft.AnalysisServices.Tabular.Database srcDb;
         try { srcDb = ModelLoaderFactory.For(profile.SourcePath).Load(profile.SourcePath); }
-        catch (Exception ex) { Console.Error.WriteLine($"Source load failed: {ex.Message}"); return ExitCodes.SourceLoadError; }
+        catch (Exception ex) { writer.Error($"Source load failed: {ex.Message}"); return ExitCodes.SourceLoadError; }
 
         // 2a. Apply parameters
         try
@@ -142,32 +154,32 @@ public static class DeployCommand
         }
         catch (ParameterApplicationException ex)
         {
-            Console.Error.WriteLine($"Parameter resolution failed: {ex.Message}");
+            writer.Error($"Parameter resolution failed: {ex.Message}");
             return ExitCodes.DiffValidationError;
         }
 
         // 3. Read target + pre-manifest
         Microsoft.AnalysisServices.Tabular.Database tgtDb;
         try { tgtDb = await targetReader.ReadAsync(profile.WorkspaceUrl, profile.DatabaseName, token, cancellationToken); }
-        catch (Exception ex) { Console.Error.WriteLine($"Target read failed: {ex.Message}"); return ExitCodes.TargetReadError; }
+        catch (Exception ex) { writer.Error($"Target read failed: {ex.Message}"); return ExitCodes.TargetReadError; }
 
         var preManifest = new PartitionManifestReader().Read(tgtDb);
         var prePath = manifestStore.Write(preManifest, profile.ArtifactsDirectory, "pre-partitions");
-        Console.Out.WriteLine($"Pre-deploy manifest: {prePath}");
+        writer.Info($"Pre-deploy manifest: {prePath}");
 
         // 4. Plan
         PlanResult plan;
         try { plan = WeftCore.Plan(srcDb, tgtDb); }
         catch (PartitionIntegrityException ex)
         {
-            Console.Error.WriteLine($"Partition integrity violation: {ex.Message}");
+            writer.Error($"Partition integrity violation: {ex.Message}");
             return ExitCodes.PartitionIntegrityError;
         }
 
         // 5. Pre-flight: drops
         if (plan.ChangeSet.TablesToDrop.Count > 0 && !profile.AllowDrops)
         {
-            Console.Error.WriteLine(
+            writer.Error(
                 $"Refusing to drop tables without allowDrops: {string.Join(", ", plan.ChangeSet.TablesToDrop)}");
             return ExitCodes.DiffValidationError;
         }
@@ -178,9 +190,9 @@ public static class DeployCommand
         if (historyViolations.Count > 0)
         {
             foreach (var v in historyViolations)
-                Console.Error.WriteLine(
+                writer.Error(
                     $"History-loss violation on {v.TableName}: would remove {string.Join(", ", v.LostPartitions)}");
-            Console.Error.WriteLine("Set allowHistoryLoss: true in the profile to proceed.");
+            writer.Error("Set allowHistoryLoss: true in the profile to proceed.");
             return ExitCodes.DiffValidationError;
         }
 
@@ -188,7 +200,7 @@ public static class DeployCommand
         await RunHookAsync(profile.Hooks.PrePlan, HookPhase.PrePlan, profile, plan.ChangeSet);
 
         if (plan.ChangeSet.IsEmpty)
-            Console.Out.WriteLine("Nothing to deploy.");
+            writer.Info("Nothing to deploy.");
 
         // 7. Write plan TMSL
         Directory.CreateDirectory(profile.ArtifactsDirectory);
@@ -203,11 +215,11 @@ public static class DeployCommand
         {
             var exec = await executor.ExecuteAsync(
                 profile.WorkspaceUrl, profile.DatabaseName, token, plan.TmslJson, cancellationToken);
-            foreach (var m in exec.Messages) Console.Out.WriteLine(m);
+            foreach (var m in exec.Messages) writer.Info(m);
             if (!exec.Success)
             {
                 await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
-                Console.Error.WriteLine("TMSL execution failed.");
+                writer.Error("TMSL execution failed.");
                 return ExitCodes.TmslExecutionError;
             }
         }
@@ -216,7 +228,7 @@ public static class DeployCommand
         var postDb = await targetReader.ReadAsync(profile.WorkspaceUrl, profile.DatabaseName, token, cancellationToken);
         var postManifest = new PartitionManifestReader().Read(postDb);
         var postPath = manifestStore.Write(postManifest, profile.ArtifactsDirectory, "post-partitions");
-        Console.Out.WriteLine($"Post-deploy manifest: {postPath}");
+        writer.Info($"Post-deploy manifest: {postPath}");
 
         var droppedTables = new HashSet<string>(plan.ChangeSet.TablesToDrop, StringComparer.Ordinal);
         foreach (var (tableName, prePartitions) in preManifest.Tables)
@@ -225,7 +237,7 @@ public static class DeployCommand
             if (!postManifest.Tables.TryGetValue(tableName, out var postPartitions))
             {
                 await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
-                Console.Error.WriteLine($"Partition integrity violation: table '{tableName}' missing post-deploy.");
+                writer.Error($"Partition integrity violation: table '{tableName}' missing post-deploy.");
                 return ExitCodes.PartitionIntegrityError;
             }
             var postNames = postPartitions.Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
@@ -233,7 +245,7 @@ public static class DeployCommand
             if (missing.Count > 0)
             {
                 await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
-                Console.Error.WriteLine(
+                writer.Error(
                     $"Partition integrity violation on '{tableName}': missing post-deploy: {string.Join(", ", missing)}");
                 return ExitCodes.PartitionIntegrityError;
             }
@@ -263,7 +275,7 @@ public static class DeployCommand
                     if (!clearRes.Success)
                     {
                         await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
-                        Console.Error.WriteLine("Bookmark clearing failed.");
+                        writer.Error("Bookmark clearing failed.");
                         return ExitCodes.RefreshError;
                     }
                 }
@@ -271,12 +283,12 @@ public static class DeployCommand
 
             var req = new RefreshRequest(profile.WorkspaceUrl, profile.DatabaseName, token, plan.ChangeSet, profile.EffectiveDate);
             var rrx = await refreshRunner.RefreshAsync(req,
-                progress: new Progress<string>(line => Console.Out.WriteLine(line)),
+                progress: new Progress<string>(line => writer.Info(line)),
                 cancellationToken: cancellationToken);
             if (!rrx.Success)
             {
                 await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
-                Console.Error.WriteLine("Refresh failed.");
+                writer.Error("Refresh failed.");
                 return ExitCodes.RefreshError;
             }
         }
@@ -301,7 +313,7 @@ public static class DeployCommand
         await File.WriteAllTextAsync(receiptPath,
             JsonSerializer.Serialize(receipt, new JsonSerializerOptions { WriteIndented = true }),
             cancellationToken);
-        Console.Out.WriteLine($"Receipt: {receiptPath}");
+        writer.Info($"Receipt: {receiptPath}");
         return ExitCodes.Success;
     }
 
