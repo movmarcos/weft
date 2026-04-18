@@ -16,5 +16,7 @@
     <ProjectReference Include="..\..\src\Weft.Auth\Weft.Auth.csproj" />
     <ProjectReference Include="..\..\src\Weft.Xmla\Weft.Xmla.csproj" />
     <ProjectReference Include="..\..\src\Weft.Cli\Weft.Cli.csproj" />
+    <ProjectReference Include="..\..\src\Weft.Config\Weft.Config.csproj" />
+    <ProjectReference Include="..\..\src\Weft.Core\Weft.Core.csproj" />
   </ItemGroup>
 </Project>

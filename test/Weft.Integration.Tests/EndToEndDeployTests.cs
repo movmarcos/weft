@@ -5,6 +5,7 @@ using FluentAssertions;
 using Weft.Auth;
 using Weft.Cli;
 using Weft.Cli.Commands;
+using Weft.Cli.Options;
 using Weft.Xmla;
 
 namespace Weft.Integration.Tests;
@@ -27,18 +28,32 @@ public class EndToEndDeployTests
         var artifacts = Directory.CreateTempSubdirectory().FullName;
         try
         {
-            var auth = AuthProviderFactory.Create(new AuthOptions(
-                AuthMode.ServicePrincipalSecret, tenant, clientId, ClientSecret: secret));
+            var authOptions = new AuthOptions(
+                AuthMode.ServicePrincipalSecret, tenant, clientId, ClientSecret: secret);
+            var auth = AuthProviderFactory.Create(authOptions);
+
+            var profile = new ResolvedProfile(
+                ProfileName: "integration",
+                WorkspaceUrl: workspace,
+                DatabaseName: database,
+                SourcePath: fixture,
+                ArtifactsDirectory: artifacts,
+                Auth: authOptions,
+                Refresh: new Weft.Config.RefreshConfigSection("full", 10, 15,
+                    new Weft.Config.IncrementalPolicyConfig(true, true, "preserve"),
+                    new Weft.Config.DynamicPartitionStrategyConfig("newestOnly", 1)),
+                AllowDrops: true,
+                AllowHistoryLoss: false,
+                NoRefresh: true,
+                ResetBookmarks: false,
+                EffectiveDate: null,
+                ParameterValues: new Dictionary<string, object?>(),
+                ParameterCliOverrides: null,
+                ParameterDeclarations: Array.Empty<Weft.Core.Parameters.ParameterDeclaration>(),
+                Hooks: new Weft.Config.HooksConfigSection(null, null, null, null, null, null));
 
             var exit = await DeployCommand.RunAsync(
-                source: fixture,
-                workspaceUrl: workspace,
-                databaseName: database,
-                artifactsDirectory: artifacts,
-                allowDrops: true,
-                noRefresh: true,
-                resetBookmarks: false,
-                effectiveDate: null,
+                profile,
                 auth: auth,
                 targetReader: new TargetReader(),
                 executor: new XmlaExecutor(),

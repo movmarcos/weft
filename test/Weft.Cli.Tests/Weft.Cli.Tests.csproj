@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Weft.Cli\Weft.Cli.csproj" />
+    <ProjectReference Include="..\..\src\Weft.Config\Weft.Config.csproj" />
     <ProjectReference Include="..\..\test\Weft.Core.Tests\Weft.Core.Tests.csproj" />
   </ItemGroup>
 </Project>

@@ -4,11 +4,17 @@
 using System.CommandLine;
 using System.Text.Json;
 using Weft.Auth;
+using Weft.Cli.Auth;
 using Weft.Cli.Options;
+using Weft.Config;
 using Weft.Core;
 using Weft.Core.Abstractions;
+using Weft.Core.Diffing;
+using Weft.Core.Hooks;
 using Weft.Core.Loading;
+using Weft.Core.Parameters;
 using Weft.Core.Partitions;
+using Weft.Core.RefreshPolicy;
 using Weft.Core.Tmsl;
 using Weft.Xmla;
 
@@ -34,48 +40,77 @@ public static class DeployCommand
         var certPwd   = CommonOptions.CertPasswordOption();
         var certThumb = CommonOptions.CertThumbprintOption();
 
+        var configOpt = new Option<string?>("--config") { Description = "Path to weft.yaml." };
+        var targetOpt = new Option<string?>("--target") { Description = "Profile name in weft.yaml." };
+
         var cmd = new Command("deploy", "Deploy a model: load → diff → execute → refresh.");
         foreach (var o in new Option[] { src, workspace, database, artifacts, allowDrops, noRefresh,
                                          resetBookmarks, effectiveDate, authMode, tenant, client,
                                          clientSecret, certPath, certPwd, certThumb })
             cmd.Options.Add(o);
+        cmd.Options.Add(configOpt);
+        cmd.Options.Add(targetOpt);
 
         cmd.SetAction(async (parse, ct) =>
         {
-            var auth = ProfileResolver.BuildAuthOptions(
-                parse.GetValue(authMode), parse.GetValue(tenant), parse.GetValue(client),
-                parse.GetValue(clientSecret), parse.GetValue(certPath), parse.GetValue(certPwd),
-                parse.GetValue(certThumb));
-            var provider = AuthProviderFactory.Create(auth);
+            WeftConfig? config = null;
+            var configPath = parse.GetValue(configOpt);
+            if (!string.IsNullOrEmpty(configPath))
+            {
+                try { config = YamlConfigLoader.LoadFromFile(configPath); }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Config load failed: {ex.Message}");
+                    return ExitCodes.ConfigError;
+                }
+            }
+
+            ResolvedProfile profile;
+            try
+            {
+                profile = ProfileResolver.Build(
+                    config: config,
+                    profileName: parse.GetValue(targetOpt) ?? "default",
+                    sourcePath: parse.GetValue(src) ?? config?.Source?.Path ?? "",
+                    artifactsDirectory: parse.GetValue(artifacts)!,
+                    noRefresh: parse.GetValue(noRefresh),
+                    resetBookmarks: parse.GetValue(resetBookmarks),
+                    effectiveDate: parse.GetValue(effectiveDate),
+                    cliParameters: null,
+                    workspaceOverride: parse.GetValue(workspace),
+                    databaseOverride: parse.GetValue(database),
+                    authModeOverride: parse.GetValue(authMode),
+                    tenantOverride: parse.GetValue(tenant),
+                    clientOverride: parse.GetValue(client),
+                    clientSecretOverride: parse.GetValue(clientSecret),
+                    certPathOverride: parse.GetValue(certPath),
+                    certPasswordOverride: parse.GetValue(certPwd),
+                    certThumbprintOverride: parse.GetValue(certThumb));
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Profile resolution failed: {ex.Message}");
+                return ExitCodes.ConfigError;
+            }
+
+            var innerAuth = AuthProviderFactory.Create(profile.Auth);
+            var tokenMgr = new TokenManager(innerAuth, TimeSpan.FromMinutes(30));
+            var sharedExecutor = new XmlaExecutor();
 
             return await RunAsync(
-                source: parse.GetValue(src)!,
-                workspaceUrl: parse.GetValue(workspace)!,
-                databaseName: parse.GetValue(database)!,
-                artifactsDirectory: parse.GetValue(artifacts)!,
-                allowDrops: parse.GetValue(allowDrops),
-                noRefresh: parse.GetValue(noRefresh),
-                resetBookmarks: parse.GetValue(resetBookmarks),
-                effectiveDate: parse.GetValue(effectiveDate),
-                auth: provider,
-                targetReader: new TargetReader(),
-                executor: new XmlaExecutor(),
-                refreshRunner: new RefreshRunner(new XmlaExecutor()),
-                manifestStore: new FilePartitionManifestStore(),
-                cancellationToken: ct);
+                profile,
+                tokenMgr,
+                new TargetReader(),
+                sharedExecutor,
+                new RefreshRunner(sharedExecutor),
+                new FilePartitionManifestStore(),
+                ct);
         });
         return cmd;
     }
 
     public static async Task<int> RunAsync(
-        string source,
-        string workspaceUrl,
-        string databaseName,
-        string artifactsDirectory,
-        bool allowDrops,
-        bool noRefresh,
-        bool resetBookmarks,
-        string? effectiveDate,
+        ResolvedProfile profile,
         IAuthProvider auth,
         ITargetReader targetReader,
         IXmlaExecutor executor,
@@ -83,36 +118,41 @@ public static class DeployCommand
         IPartitionManifestStore manifestStore,
         CancellationToken cancellationToken = default)
     {
-        _ = resetBookmarks; // Plan 3 (config + bookmark-mode wiring).
-
         // 1. Auth
         AccessToken token;
         try { token = await auth.GetTokenAsync(cancellationToken); }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Auth failed: {ex.Message}");
-            return ExitCodes.AuthError;
-        }
+        catch (Exception ex) { Console.Error.WriteLine($"Auth failed: {ex.Message}"); return ExitCodes.AuthError; }
 
         // 2. Load source
         Microsoft.AnalysisServices.Tabular.Database srcDb;
-        try { srcDb = ModelLoaderFactory.For(source).Load(source); }
-        catch (Exception ex)
+        try { srcDb = ModelLoaderFactory.For(profile.SourcePath).Load(profile.SourcePath); }
+        catch (Exception ex) { Console.Error.WriteLine($"Source load failed: {ex.Message}"); return ExitCodes.SourceLoadError; }
+
+        // 2a. Apply parameters
+        try
         {
-            Console.Error.WriteLine($"Source load failed: {ex.Message}");
-            return ExitCodes.SourceLoadError;
+            var resolver = new ParameterResolver();
+            var resolutions = resolver.Resolve(
+                srcDb,
+                profile.ParameterDeclarations,
+                profile.ParameterValues,
+                profile.ParameterCliOverrides,
+                paramsFileValues: null);
+            resolver.Apply(srcDb, resolutions);
+        }
+        catch (ParameterApplicationException ex)
+        {
+            Console.Error.WriteLine($"Parameter resolution failed: {ex.Message}");
+            return ExitCodes.DiffValidationError;
         }
 
-        // 3. Read target + write pre-manifest
+        // 3. Read target + pre-manifest
         Microsoft.AnalysisServices.Tabular.Database tgtDb;
-        try { tgtDb = await targetReader.ReadAsync(workspaceUrl, databaseName, token, cancellationToken); }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Target read failed: {ex.Message}");
-            return ExitCodes.TargetReadError;
-        }
+        try { tgtDb = await targetReader.ReadAsync(profile.WorkspaceUrl, profile.DatabaseName, token, cancellationToken); }
+        catch (Exception ex) { Console.Error.WriteLine($"Target read failed: {ex.Message}"); return ExitCodes.TargetReadError; }
+
         var preManifest = new PartitionManifestReader().Read(tgtDb);
-        var prePath = manifestStore.Write(preManifest, artifactsDirectory, "pre-partitions");
+        var prePath = manifestStore.Write(preManifest, profile.ArtifactsDirectory, "pre-partitions");
         Console.Out.WriteLine($"Pre-deploy manifest: {prePath}");
 
         // 4. Plan
@@ -125,81 +165,129 @@ public static class DeployCommand
         }
 
         // 5. Pre-flight: drops
-        if (plan.ChangeSet.TablesToDrop.Count > 0 && !allowDrops)
+        if (plan.ChangeSet.TablesToDrop.Count > 0 && !profile.AllowDrops)
         {
             Console.Error.WriteLine(
-                $"Refusing to drop tables without --allow-drops: {string.Join(", ", plan.ChangeSet.TablesToDrop)}");
+                $"Refusing to drop tables without allowDrops: {string.Join(", ", plan.ChangeSet.TablesToDrop)}");
             return ExitCodes.DiffValidationError;
         }
 
-        if (plan.ChangeSet.IsEmpty)
+        // 5a. Pre-flight: history-loss
+        var gate = new HistoryLossGate(new RetentionCalculator());
+        var historyViolations = gate.Check(plan.ChangeSet, tgtDb, profile.AllowHistoryLoss);
+        if (historyViolations.Count > 0)
         {
-            Console.Out.WriteLine("Nothing to deploy.");
+            foreach (var v in historyViolations)
+                Console.Error.WriteLine(
+                    $"History-loss violation on {v.TableName}: would remove {string.Join(", ", v.LostPartitions)}");
+            Console.Error.WriteLine("Set allowHistoryLoss: true in the profile to proceed.");
+            return ExitCodes.DiffValidationError;
         }
 
-        // 6. Write plan TMSL
-        Directory.CreateDirectory(artifactsDirectory);
+        // 6. pre-plan hook
+        await RunHookAsync(profile.Hooks.PrePlan, HookPhase.PrePlan, profile, plan.ChangeSet);
+
+        if (plan.ChangeSet.IsEmpty)
+            Console.Out.WriteLine("Nothing to deploy.");
+
+        // 7. Write plan TMSL
+        Directory.CreateDirectory(profile.ArtifactsDirectory);
         var ts = DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmss");
-        var planPath = Path.Combine(artifactsDirectory, $"{ts}-{databaseName}-plan.tmsl");
+        var planPath = Path.Combine(profile.ArtifactsDirectory, $"{ts}-{profile.DatabaseName}-plan.tmsl");
         await File.WriteAllTextAsync(planPath, plan.TmslJson, cancellationToken);
 
-        // 7. Execute (skip if empty)
+        // 8. pre-deploy hook + execute
+        await RunHookAsync(profile.Hooks.PreDeploy, HookPhase.PreDeploy, profile, plan.ChangeSet);
+
         if (!plan.ChangeSet.IsEmpty)
         {
-            var exec = await executor.ExecuteAsync(workspaceUrl, databaseName, token, plan.TmslJson, cancellationToken);
+            var exec = await executor.ExecuteAsync(
+                profile.WorkspaceUrl, profile.DatabaseName, token, plan.TmslJson, cancellationToken);
             foreach (var m in exec.Messages) Console.Out.WriteLine(m);
             if (!exec.Success)
             {
+                await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
                 Console.Error.WriteLine("TMSL execution failed.");
                 return ExitCodes.TmslExecutionError;
             }
         }
 
-        // 8. Post-deploy manifest + integrity gate
-        var postDb = await targetReader.ReadAsync(workspaceUrl, databaseName, token, cancellationToken);
+        // 9. Post-deploy manifest + integrity gate
+        var postDb = await targetReader.ReadAsync(profile.WorkspaceUrl, profile.DatabaseName, token, cancellationToken);
         var postManifest = new PartitionManifestReader().Read(postDb);
-        var postPath = manifestStore.Write(postManifest, artifactsDirectory, "post-partitions");
+        var postPath = manifestStore.Write(postManifest, profile.ArtifactsDirectory, "post-partitions");
         Console.Out.WriteLine($"Post-deploy manifest: {postPath}");
 
         var droppedTables = new HashSet<string>(plan.ChangeSet.TablesToDrop, StringComparer.Ordinal);
-        foreach (var (table, prePartitions) in preManifest.Tables)
+        foreach (var (tableName, prePartitions) in preManifest.Tables)
         {
-            if (droppedTables.Contains(table)) continue;
-            if (!postManifest.Tables.TryGetValue(table, out var postPartitions))
+            if (droppedTables.Contains(tableName)) continue;
+            if (!postManifest.Tables.TryGetValue(tableName, out var postPartitions))
             {
-                Console.Error.WriteLine($"Partition integrity violation: table '{table}' missing post-deploy.");
+                await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
+                Console.Error.WriteLine($"Partition integrity violation: table '{tableName}' missing post-deploy.");
                 return ExitCodes.PartitionIntegrityError;
             }
             var postNames = postPartitions.Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
             var missing = prePartitions.Where(p => !postNames.Contains(p.Name)).Select(p => p.Name).ToList();
             if (missing.Count > 0)
             {
+                await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
                 Console.Error.WriteLine(
-                    $"Partition integrity violation on '{table}': missing post-deploy: {string.Join(", ", missing)}");
+                    $"Partition integrity violation on '{tableName}': missing post-deploy: {string.Join(", ", missing)}");
                 return ExitCodes.PartitionIntegrityError;
             }
         }
 
-        // 9. Refresh
-        if (!noRefresh && !plan.ChangeSet.IsEmpty)
+        // 10. Bookmark clearing + pre-refresh hook + refresh
+        await RunHookAsync(profile.Hooks.PreRefresh, HookPhase.PreRefresh, profile, plan.ChangeSet);
+
+        if (!profile.NoRefresh && !plan.ChangeSet.IsEmpty)
         {
-            var req = new RefreshRequest(workspaceUrl, databaseName, token, plan.ChangeSet, effectiveDate);
+            var bookmarkMode = profile.ResetBookmarks ? "clearAll"
+                : profile.Refresh.IncrementalPolicy?.BookmarkMode ?? "preserve";
+            if (bookmarkMode != "preserve")
+            {
+                var tablesToClear = bookmarkMode switch
+                {
+                    "clearAll" => plan.ChangeSet.RefreshTargets.ToList(),
+                    "clearForPolicyChange" => plan.ChangeSet.TablesToAlter
+                        .Where(d => d.RefreshPolicyChanged).Select(d => d.Name).ToList(),
+                    _ => new List<string>()
+                };
+                if (tablesToClear.Count > 0)
+                {
+                    var clearTmsl = new BookmarkClearer().BuildTmsl(postDb, tablesToClear);
+                    var clearRes = await executor.ExecuteAsync(
+                        profile.WorkspaceUrl, profile.DatabaseName, token, clearTmsl, cancellationToken);
+                    if (!clearRes.Success)
+                    {
+                        await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
+                        Console.Error.WriteLine("Bookmark clearing failed.");
+                        return ExitCodes.RefreshError;
+                    }
+                }
+            }
+
+            var req = new RefreshRequest(profile.WorkspaceUrl, profile.DatabaseName, token, plan.ChangeSet, profile.EffectiveDate);
             var rrx = await refreshRunner.RefreshAsync(req,
                 progress: new Progress<string>(line => Console.Out.WriteLine(line)),
                 cancellationToken: cancellationToken);
             if (!rrx.Success)
             {
-                Console.Error.WriteLine("Refresh failed (deploy succeeded). Investigate.");
+                await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
+                Console.Error.WriteLine("Refresh failed.");
                 return ExitCodes.RefreshError;
             }
         }
 
-        // 10. Receipt
+        await RunHookAsync(profile.Hooks.PostRefresh, HookPhase.PostRefresh, profile, plan.ChangeSet);
+        await RunHookAsync(profile.Hooks.PostDeploy, HookPhase.PostDeploy, profile, plan.ChangeSet);
+
+        // 11. Receipt
         var receipt = new
         {
-            ts,
-            databaseName,
-            workspaceUrl,
+            ts, profile.DatabaseName, profile.WorkspaceUrl, profile.ProfileName,
             add = plan.ChangeSet.TablesToAdd.Select(t => t.Name).ToArray(),
             drop = plan.ChangeSet.TablesToDrop.ToArray(),
             alter = plan.ChangeSet.TablesToAlter.Select(t => t.Name).ToArray(),
@@ -207,15 +295,32 @@ public static class DeployCommand
             preManifest = prePath,
             postManifest = postPath,
             planTmsl = planPath,
-            refreshSkipped = noRefresh,
+            refreshSkipped = profile.NoRefresh
         };
-        var receiptPath = Path.Combine(artifactsDirectory, $"{ts}-{databaseName}-receipt.json");
-        await File.WriteAllTextAsync(
-            receiptPath,
+        var receiptPath = Path.Combine(profile.ArtifactsDirectory, $"{ts}-{profile.DatabaseName}-receipt.json");
+        await File.WriteAllTextAsync(receiptPath,
             JsonSerializer.Serialize(receipt, new JsonSerializerOptions { WriteIndented = true }),
             cancellationToken);
         Console.Out.WriteLine($"Receipt: {receiptPath}");
-
         return ExitCodes.Success;
+    }
+
+    private static async Task RunHookAsync(string? command, HookPhase phase, ResolvedProfile profile, ChangeSet changeSet)
+    {
+        if (string.IsNullOrWhiteSpace(command)) return;
+        try
+        {
+            var ctx = new HookContext(profile.ProfileName, profile.WorkspaceUrl, profile.DatabaseName, phase,
+                ChangeSetSnapshot.From(changeSet));
+            var result = await new HookRunner().RunAsync(new HookDefinition(phase, command), ctx);
+            if (!string.IsNullOrEmpty(result.Stdout)) Console.Out.WriteLine(result.Stdout);
+            if (!string.IsNullOrEmpty(result.Stderr)) Console.Error.WriteLine(result.Stderr);
+            if (result.ExitCode != 0)
+                Console.Error.WriteLine($"Hook '{phase}' exited {result.ExitCode} (non-fatal).");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Hook '{phase}' failed: {ex.Message} (continuing).");
+        }
     }
 }

@@ -4,6 +4,7 @@
 using FluentAssertions;
 using NSubstitute;
 using Weft.Cli.Commands;
+using Weft.Cli.Options;
 using Weft.Cli.Tests.Helpers;
 using Weft.Core.Abstractions;
 using Weft.Core.Loading;
@@ -17,6 +18,27 @@ public class DeployCommandTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..",
             "test", "Weft.Core.Tests", "fixtures", "models", "tiny-static.bim");
 
+    private static ResolvedProfile MakeProfile(string src, string artifactsDir, bool allowDrops = false) =>
+        new(
+            ProfileName: "test",
+            WorkspaceUrl: "powerbi://x",
+            DatabaseName: "TinyStatic",
+            SourcePath: src,
+            ArtifactsDirectory: artifactsDir,
+            Auth: new Weft.Auth.AuthOptions(Weft.Auth.AuthMode.Interactive, "t", "c"),
+            Refresh: new Weft.Config.RefreshConfigSection("full", 10, 15,
+                new Weft.Config.IncrementalPolicyConfig(true, true, "preserve"),
+                new Weft.Config.DynamicPartitionStrategyConfig("newestOnly", 1)),
+            AllowDrops: allowDrops,
+            AllowHistoryLoss: false,
+            NoRefresh: false,
+            ResetBookmarks: false,
+            EffectiveDate: null,
+            ParameterValues: new Dictionary<string, object?>(),
+            ParameterCliOverrides: null,
+            ParameterDeclarations: Array.Empty<Weft.Core.Parameters.ParameterDeclaration>(),
+            Hooks: new Weft.Config.HooksConfigSection(null, null, null, null, null, null));
+
     [Fact]
     public async Task Happy_path_returns_zero_and_writes_pre_post_manifests_and_receipt()
     {
@@ -27,14 +49,7 @@ public class DeployCommandTests
         try
         {
             var exit = await DeployCommand.RunAsync(
-                source: src,
-                workspaceUrl: "powerbi://x",
-                databaseName: "TinyStatic",
-                artifactsDirectory: artifacts,
-                allowDrops: false,
-                noRefresh: false,
-                resetBookmarks: false,
-                effectiveDate: null,
+                MakeProfile(src, artifacts),
                 auth: CliTestHost.MakeAuth(),
                 targetReader: CliTestHost.StubTarget(tgtDb),
                 executor: CliTestHost.MakeExecutor(),
@@ -62,9 +77,7 @@ public class DeployCommandTests
                 _ => throw new InvalidOperationException("aad down"));
 
             var exit = await DeployCommand.RunAsync(
-                source: src, workspaceUrl: "powerbi://x", databaseName: "TinyStatic",
-                artifactsDirectory: artifacts, allowDrops: false, noRefresh: false,
-                resetBookmarks: false, effectiveDate: null,
+                MakeProfile(src, artifacts),
                 auth: auth,
                 targetReader: CliTestHost.StubTarget(tgtDb),
                 executor: CliTestHost.MakeExecutor(),
@@ -86,9 +99,7 @@ public class DeployCommandTests
         try
         {
             var exit = await DeployCommand.RunAsync(
-                source: src, workspaceUrl: "powerbi://x", databaseName: "TinyStatic",
-                artifactsDirectory: artifacts, allowDrops: false, noRefresh: false,
-                resetBookmarks: false, effectiveDate: null,
+                MakeProfile(src, artifacts, allowDrops: false),
                 auth: CliTestHost.MakeAuth(),
                 targetReader: CliTestHost.StubTarget(tgtDb),
                 executor: CliTestHost.MakeExecutor(),
@@ -114,9 +125,7 @@ public class DeployCommandTests
         try
         {
             var exit = await DeployCommand.RunAsync(
-                source: src, workspaceUrl: "powerbi://x", databaseName: "TinyStatic",
-                artifactsDirectory: artifacts, allowDrops: false, noRefresh: false,
-                resetBookmarks: false, effectiveDate: null,
+                MakeProfile(src, artifacts),
                 auth: CliTestHost.MakeAuth(),
                 targetReader: CliTestHost.StubTarget(tgtDb),
                 executor: CliTestHost.MakeExecutor(success: false),
