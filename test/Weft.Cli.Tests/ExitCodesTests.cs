@@ -21,4 +21,7 @@ public class ExitCodesTests
         ExitCodes.RefreshError.Should().Be(8);
         ExitCodes.PartitionIntegrityError.Should().Be(9);
     }
+
+    [Fact]
+    public void ParameterError_is_10() => ExitCodes.ParameterError.Should().Be(10);
 }

@@ -155,7 +155,7 @@ public static class DeployCommand
         catch (ParameterApplicationException ex)
         {
             writer.Error($"Parameter resolution failed: {ex.Message}");
-            return ExitCodes.DiffValidationError;
+            return ExitCodes.ParameterError;
         }
 
         // 3. Read target + pre-manifest

@@ -15,4 +15,5 @@ public static class ExitCodes
     public const int TmslExecutionError = 7;
     public const int RefreshError = 8;
     public const int PartitionIntegrityError = 9;
+    public const int ParameterError = 10;
 }
