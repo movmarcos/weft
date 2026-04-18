@@ -54,6 +54,8 @@ jobs:
 
   publish-nuget:
     runs-on: ubuntu-latest
+    env:
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -66,9 +68,7 @@ jobs:
             --output nupkgs \
             /p:Version=${{ github.event.release.tag_name }}
       - name: Push to nuget.org
-        if: ${{ secrets.NUGET_API_KEY != '' }}
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        if: env.NUGET_API_KEY != ''
         run: |
           dotnet nuget push nupkgs/*.nupkg \
             --api-key "$NUGET_API_KEY" \
