@@ -302,7 +302,7 @@ cd ..
 
 - [ ] **Step 2: Replace csproj with FluentAssertions + linked fixture**
 
-Before writing this csproj, locate a simple .bim fixture already in the weft repo. Check `test/Weft.Core.Tests/fixtures/models/` — use whichever simple model is there (e.g. `simple/simple.bim`). Adjust the `<None Include>` path accordingly.
+The existing weft repo has a minimal fixture at `test/Weft.Core.Tests/fixtures/models/tiny-static.bim` (one table `DimDate`, one table `FactSales` with a measure `Total Sales`). Studio's tests link to it but expose it as `simple.bim` in the output so test code can stay neutral about which upstream fixture it comes from.
 
 Replace the generated csproj with:
 ```xml
@@ -317,16 +317,14 @@ Replace the generated csproj with:
     <ProjectReference Include="..\..\src\WeftStudio.App\WeftStudio.App.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Link (don't copy) the existing Weft.Core fixture into this test project's output -->
-    <None Include="..\..\..\test\Weft.Core.Tests\fixtures\models\simple\simple.bim"
+    <!-- Link the existing Weft.Core fixture into this test project's output as simple.bim -->
+    <None Include="..\..\..\test\Weft.Core.Tests\fixtures\models\tiny-static.bim"
           Link="fixtures\simple.bim">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 </Project>
 ```
-
-If the simple fixture lives at a different path under `test/Weft.Core.Tests/fixtures/`, update the `<None Include>` path. If there is no simple single-table `.bim` there, fall back to copying one from the `samples/` folder (e.g. `samples/01-simple-bim/model.bim`) with a `<None Include="..\..\..\samples\01-simple-bim\model.bim" Link="fixtures\simple.bim">` entry instead.
 
 - [ ] **Step 3: Add to solution and verify**
 
@@ -506,13 +504,13 @@ public class RenameMeasureCommandTests
     public void Apply_renames_measure_on_table()
     {
         var session = ModelSession.OpenBim(FixturePath);
-        var cmd = new RenameMeasureCommand("Sales", "Total Sales", "Revenue");
+        var cmd = new RenameMeasureCommand("FactSales", "Total Sales", "Revenue");
 
         cmd.Apply(session.Database);
 
-        session.Database.Model.Tables["Sales"]
+        session.Database.Model.Tables["FactSales"]
             .Measures.Contains("Total Sales").Should().BeFalse();
-        session.Database.Model.Tables["Sales"]
+        session.Database.Model.Tables["FactSales"]
             .Measures.Contains("Revenue").Should().BeTrue();
     }
 
@@ -520,12 +518,12 @@ public class RenameMeasureCommandTests
     public void Revert_restores_original_name()
     {
         var session = ModelSession.OpenBim(FixturePath);
-        var cmd = new RenameMeasureCommand("Sales", "Total Sales", "Revenue");
+        var cmd = new RenameMeasureCommand("FactSales", "Total Sales", "Revenue");
 
         cmd.Apply(session.Database);
         cmd.Revert(session.Database);
 
-        session.Database.Model.Tables["Sales"]
+        session.Database.Model.Tables["FactSales"]
             .Measures.Contains("Total Sales").Should().BeTrue();
     }
 
@@ -533,14 +531,14 @@ public class RenameMeasureCommandTests
     public void Apply_throws_when_target_name_already_exists()
     {
         var session = ModelSession.OpenBim(FixturePath);
-        var existing = session.Database.Model.Tables["Sales"].Measures[0].Name;
-        var otherExisting = session.Database.Model.Tables["Sales"].Measures.Count > 1
-            ? session.Database.Model.Tables["Sales"].Measures[1].Name
+        var existing = session.Database.Model.Tables["FactSales"].Measures[0].Name;
+        var otherExisting = session.Database.Model.Tables["FactSales"].Measures.Count > 1
+            ? session.Database.Model.Tables["FactSales"].Measures[1].Name
             : existing;
 
         if (existing == otherExisting) return; // skip if fixture only has one measure
 
-        var cmd = new RenameMeasureCommand("Sales", existing, otherExisting);
+        var cmd = new RenameMeasureCommand("FactSales", existing, otherExisting);
 
         Action act = () => cmd.Apply(session.Database);
 
@@ -551,7 +549,7 @@ public class RenameMeasureCommandTests
     [Fact]
     public void Description_is_human_readable()
     {
-        var cmd = new RenameMeasureCommand("Sales", "Total Sales", "Revenue");
+        var cmd = new RenameMeasureCommand("FactSales", "Total Sales", "Revenue");
         cmd.Description.Should().Be("Rename measure Sales[Total Sales] → Revenue");
     }
 }
@@ -639,7 +637,7 @@ public class ChangeTrackerTests
     public void Execute_applies_command_and_marks_dirty()
     {
         var s = ModelSession.OpenBim(FixturePath);
-        var cmd = new RenameMeasureCommand("Sales", "Total Sales", "Revenue");
+        var cmd = new RenameMeasureCommand("FactSales", "Total Sales", "Revenue");
 
         s.ChangeTracker.Execute(s.Database, cmd);
 
@@ -653,11 +651,11 @@ public class ChangeTrackerTests
     {
         var s = ModelSession.OpenBim(FixturePath);
         s.ChangeTracker.Execute(s.Database,
-            new RenameMeasureCommand("Sales", "Total Sales", "Revenue"));
+            new RenameMeasureCommand("FactSales", "Total Sales", "Revenue"));
 
         s.ChangeTracker.Undo(s.Database);
 
-        s.Database.Model.Tables["Sales"]
+        s.Database.Model.Tables["FactSales"]
             .Measures.Contains("Total Sales").Should().BeTrue();
         s.ChangeTracker.UndoHistory.Should().BeEmpty();
         s.ChangeTracker.RedoHistory.Should().ContainSingle();
@@ -668,12 +666,12 @@ public class ChangeTrackerTests
     {
         var s = ModelSession.OpenBim(FixturePath);
         s.ChangeTracker.Execute(s.Database,
-            new RenameMeasureCommand("Sales", "Total Sales", "Revenue"));
+            new RenameMeasureCommand("FactSales", "Total Sales", "Revenue"));
         s.ChangeTracker.Undo(s.Database);
 
         s.ChangeTracker.Redo(s.Database);
 
-        s.Database.Model.Tables["Sales"]
+        s.Database.Model.Tables["FactSales"]
             .Measures.Contains("Revenue").Should().BeTrue();
     }
 
@@ -682,10 +680,10 @@ public class ChangeTrackerTests
     {
         var s = ModelSession.OpenBim(FixturePath);
         s.ChangeTracker.Execute(s.Database,
-            new RenameMeasureCommand("Sales", "Total Sales", "Revenue"));
+            new RenameMeasureCommand("FactSales", "Total Sales", "Revenue"));
         s.ChangeTracker.Undo(s.Database);
         s.ChangeTracker.Execute(s.Database,
-            new RenameMeasureCommand("Sales", "Total Sales", "Revenue2"));
+            new RenameMeasureCommand("FactSales", "Total Sales", "Revenue2"));
 
         s.ChangeTracker.RedoHistory.Should().BeEmpty();
     }
@@ -695,7 +693,7 @@ public class ChangeTrackerTests
     {
         var s = ModelSession.OpenBim(FixturePath);
         s.ChangeTracker.Execute(s.Database,
-            new RenameMeasureCommand("Sales", "Total Sales", "Revenue"));
+            new RenameMeasureCommand("FactSales", "Total Sales", "Revenue"));
 
         s.ChangeTracker.MarkClean();
 
@@ -792,35 +790,35 @@ public class UpdateDaxCommandTests
     public void Apply_updates_measure_expression()
     {
         var s = ModelSession.OpenBim(FixturePath);
-        var measure = s.Database.Model.Tables["Sales"].Measures[0];
+        var measure = s.Database.Model.Tables["FactSales"].Measures[0];
         var original = measure.Expression;
-        var cmd = new UpdateDaxCommand("Sales", measure.Name, original, "SUM(Sales[Amount])*2");
+        var cmd = new UpdateDaxCommand("FactSales", measure.Name, original, "SUM(FactSales[Amount])*2");
 
         cmd.Apply(s.Database);
 
-        s.Database.Model.Tables["Sales"].Measures[measure.Name].Expression
-            .Should().Be("SUM(Sales[Amount])*2");
+        s.Database.Model.Tables["FactSales"].Measures[measure.Name].Expression
+            .Should().Be("SUM(FactSales[Amount])*2");
     }
 
     [Fact]
     public void Revert_restores_original_expression()
     {
         var s = ModelSession.OpenBim(FixturePath);
-        var measure = s.Database.Model.Tables["Sales"].Measures[0];
+        var measure = s.Database.Model.Tables["FactSales"].Measures[0];
         var original = measure.Expression;
-        var cmd = new UpdateDaxCommand("Sales", measure.Name, original, "SUM(Sales[Amount])*2");
+        var cmd = new UpdateDaxCommand("FactSales", measure.Name, original, "SUM(FactSales[Amount])*2");
 
         cmd.Apply(s.Database);
         cmd.Revert(s.Database);
 
-        s.Database.Model.Tables["Sales"].Measures[measure.Name].Expression
+        s.Database.Model.Tables["FactSales"].Measures[measure.Name].Expression
             .Should().Be(original);
     }
 
     [Fact]
     public void Description_is_human_readable()
     {
-        var cmd = new UpdateDaxCommand("Sales", "Total Sales", "OLD", "NEW");
+        var cmd = new UpdateDaxCommand("FactSales", "Total Sales", "OLD", "NEW");
         cmd.Description.Should().Be("Update DAX for Sales[Total Sales]");
     }
 }
@@ -909,11 +907,11 @@ public class BimSaverTests
         {
             var s = ModelSession.OpenBim(tmp);
             s.ChangeTracker.Execute(s.Database,
-                new RenameMeasureCommand("Sales", "Total Sales", "Revenue"));
+                new RenameMeasureCommand("FactSales", "Total Sales", "Revenue"));
             BimSaver.Save(s);
 
             var reloaded = ModelSession.OpenBim(tmp);
-            reloaded.Database.Model.Tables["Sales"].Measures.Contains("Revenue")
+            reloaded.Database.Model.Tables["FactSales"].Measures.Contains("Revenue")
                 .Should().BeTrue();
         }
         finally
@@ -932,7 +930,7 @@ public class BimSaverTests
         {
             var s = ModelSession.OpenBim(tmp);
             s.ChangeTracker.Execute(s.Database,
-                new RenameMeasureCommand("Sales", "Total Sales", "Revenue"));
+                new RenameMeasureCommand("FactSales", "Total Sales", "Revenue"));
             s.IsDirty.Should().BeTrue();
 
             BimSaver.Save(s);
@@ -1399,7 +1397,7 @@ public class ExplorerViewModelTests
 
         var tablesNode = vm.Roots.Single(r => r.DisplayName == "Tables");
         tablesNode.Children.Should().NotBeEmpty();
-        tablesNode.Children.Select(c => c.DisplayName).Should().Contain("Sales");
+        tablesNode.Children.Select(c => c.DisplayName).Should().Contain("FactSales");
     }
 
     [Fact]
@@ -1851,14 +1849,14 @@ public class DaxEditorViewModelTests
     public void Commit_applies_UpdateDaxCommand_to_session()
     {
         var s = ModelSession.OpenBim(FixturePath);
-        var m = s.Database.Model.Tables["Sales"].Measures[0];
-        var vm = new DaxEditorViewModel(s, "Sales", m.Name);
+        var m = s.Database.Model.Tables["FactSales"].Measures[0];
+        var vm = new DaxEditorViewModel(s, "FactSales", m.Name);
 
-        vm.Text = "SUM(Sales[Amount])*2";
+        vm.Text = "SUM(FactSales[Amount])*2";
         vm.Commit();
 
-        s.Database.Model.Tables["Sales"].Measures[m.Name].Expression
-            .Should().Be("SUM(Sales[Amount])*2");
+        s.Database.Model.Tables["FactSales"].Measures[m.Name].Expression
+            .Should().Be("SUM(FactSales[Amount])*2");
         s.IsDirty.Should().BeTrue();
     }
 
@@ -1866,8 +1864,8 @@ public class DaxEditorViewModelTests
     public void Commit_no_op_when_text_unchanged()
     {
         var s = ModelSession.OpenBim(FixturePath);
-        var m = s.Database.Model.Tables["Sales"].Measures[0];
-        var vm = new DaxEditorViewModel(s, "Sales", m.Name);
+        var m = s.Database.Model.Tables["FactSales"].Measures[0];
+        var vm = new DaxEditorViewModel(s, "FactSales", m.Name);
 
         vm.Commit();
 
@@ -1907,8 +1905,8 @@ public void OpenMeasure_adds_tab_and_activates_it()
     var vm = new ShellViewModel();
     vm.OpenModel(fixture);
 
-    var measure = vm.Explorer!.Session.Database.Model.Tables["Sales"].Measures[0];
-    vm.OpenMeasure("Sales", measure.Name);
+    var measure = vm.Explorer!.Session.Database.Model.Tables["FactSales"].Measures[0];
+    vm.OpenMeasure("FactSales", measure.Name);
 
     vm.OpenTabs.Should().ContainSingle()
         .Which.MeasureName.Should().Be(measure.Name);
@@ -1921,9 +1919,9 @@ public void OpenMeasure_focuses_existing_tab_if_already_open()
     var fixture = Path.Combine(AppContext.BaseDirectory, "fixtures", "simple.bim");
     var vm = new ShellViewModel();
     vm.OpenModel(fixture);
-    var measure = vm.Explorer!.Session.Database.Model.Tables["Sales"].Measures[0];
-    vm.OpenMeasure("Sales", measure.Name);
-    vm.OpenMeasure("Sales", measure.Name);
+    var measure = vm.Explorer!.Session.Database.Model.Tables["FactSales"].Measures[0];
+    vm.OpenMeasure("FactSales", measure.Name);
+    vm.OpenMeasure("FactSales", measure.Name);
 
     vm.OpenTabs.Should().ContainSingle();
 }
@@ -2100,8 +2098,8 @@ public class InspectorViewModelTests
     public void Reflects_measure_name_and_format()
     {
         var s = ModelSession.OpenBim(FixturePath);
-        var m = s.Database.Model.Tables["Sales"].Measures[0];
-        var vm = new InspectorViewModel(s, "Sales", m.Name);
+        var m = s.Database.Model.Tables["FactSales"].Measures[0];
+        var vm = new InspectorViewModel(s, "FactSales", m.Name);
 
         vm.Name.Should().Be(m.Name);
     }
@@ -2110,14 +2108,14 @@ public class InspectorViewModelTests
     public void Renaming_via_inspector_applies_RenameMeasureCommand()
     {
         var s = ModelSession.OpenBim(FixturePath);
-        var m = s.Database.Model.Tables["Sales"].Measures[0];
+        var m = s.Database.Model.Tables["FactSales"].Measures[0];
         var originalName = m.Name;
-        var vm = new InspectorViewModel(s, "Sales", originalName);
+        var vm = new InspectorViewModel(s, "FactSales", originalName);
 
         vm.Name = "Renamed";
         vm.CommitRename();
 
-        s.Database.Model.Tables["Sales"].Measures.Contains("Renamed")
+        s.Database.Model.Tables["FactSales"].Measures.Contains("Renamed")
             .Should().BeTrue();
         s.IsDirty.Should().BeTrue();
     }
@@ -2306,10 +2304,10 @@ public async Task SaveCommand_persists_changes_and_clears_dirty()
     {
         var vm = new ShellViewModel();
         vm.OpenModel(tmp);
-        var m = vm.Explorer!.Session.Database.Model.Tables["Sales"].Measures[0];
+        var m = vm.Explorer!.Session.Database.Model.Tables["FactSales"].Measures[0];
         vm.Explorer.Session.ChangeTracker.Execute(
             vm.Explorer.Session.Database,
-            new WeftStudio.App.Commands.RenameMeasureCommand("Sales", m.Name, "Renamed"));
+            new WeftStudio.App.Commands.RenameMeasureCommand("FactSales", m.Name, "Renamed"));
 
         vm.Explorer.Session.IsDirty.Should().BeTrue();
         await vm.SaveCommand.Execute();
@@ -2590,18 +2588,18 @@ public class EndToEndSmokeTests
         {
             var vm = new ShellViewModel();
             vm.OpenModel(tmp);
-            var measure = vm.Explorer!.Session.Database.Model.Tables["Sales"].Measures[0];
+            var measure = vm.Explorer!.Session.Database.Model.Tables["FactSales"].Measures[0];
 
-            vm.OpenMeasure("Sales", measure.Name);
-            vm.ActiveTab!.Text = "SUM(Sales[Amount]) * 2";
+            vm.OpenMeasure("FactSales", measure.Name);
+            vm.ActiveTab!.Text = "SUM(FactSales[Amount]) * 2";
             vm.ActiveTab.Commit();
 
             await vm.SaveCommand.Execute();
 
             var vm2 = new ShellViewModel();
             vm2.OpenModel(tmp);
-            vm2.Explorer!.Session.Database.Model.Tables["Sales"]
-                .Measures[measure.Name].Expression.Should().Be("SUM(Sales[Amount]) * 2");
+            vm2.Explorer!.Session.Database.Model.Tables["FactSales"]
+                .Measures[measure.Name].Expression.Should().Be("SUM(FactSales[Amount]) * 2");
         }
         finally { File.Delete(tmp); }
     }
