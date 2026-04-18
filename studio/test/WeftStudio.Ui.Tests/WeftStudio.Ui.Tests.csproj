@@ -20,4 +20,10 @@
     <ProjectReference Include="..\..\src\WeftStudio.Ui\WeftStudio.Ui.csproj" />
     <ProjectReference Include="..\..\src\WeftStudio.App\WeftStudio.App.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\test\Weft.Core.Tests\fixtures\models\tiny-static.bim"
+          Link="fixtures\simple.bim">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
