@@ -4,6 +4,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using WeftStudio.Ui.Shell;
 
 namespace WeftStudio.Ui;
 
@@ -13,7 +14,10 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        // MainWindow assignment happens in Task 15 after ShellWindow exists.
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.MainWindow = new ShellWindow { DataContext = new ShellViewModel() };
+        }
         base.OnFrameworkInitializationCompleted();
     }
 }

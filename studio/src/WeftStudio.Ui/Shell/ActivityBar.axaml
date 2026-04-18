@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="WeftStudio.Ui.Shell.ActivityBar">
+  <StackPanel Background="#333" Spacing="8" Margin="0,8">
+    <Button Content="☰" Classes="activity" ToolTip.Tip="Explorer"/>
+    <Button Content="◈" Classes="activity" ToolTip.Tip="Diagram (v0.2)" IsEnabled="False"/>
+    <Button Content="⇄" Classes="activity" ToolTip.Tip="Diff (v0.3)" IsEnabled="False"/>
+    <Button Content="🔎" Classes="activity" ToolTip.Tip="Search (v1.0)" IsEnabled="False"/>
+  </StackPanel>
+  <UserControl.Styles>
+    <Style Selector="Button.activity">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="#CCC"/>
+      <Setter Property="FontSize" Value="18"/>
+      <Setter Property="HorizontalAlignment" Value="Center"/>
+      <Setter Property="Padding" Value="10,6"/>
+    </Style>
+  </UserControl.Styles>
+</UserControl>
