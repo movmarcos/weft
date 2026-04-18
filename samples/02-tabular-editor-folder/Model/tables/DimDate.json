@@ -1,0 +1,8 @@
+{
+  "name": "DimDate",
+  "columns": [{ "name": "Date", "dataType": "dateTime", "sourceColumn": "Date" }],
+  "partitions": [{
+    "name": "DimDate", "mode": "import",
+    "source": { "type": "m", "expression": "let Source = #table({\"Date\"}, {{#date(2025,1,1)}}) in Source" }
+  }]
+}
