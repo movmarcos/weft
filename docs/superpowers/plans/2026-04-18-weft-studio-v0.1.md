@@ -12,22 +12,22 @@
 
 ---
 
-## File structure at end of v0.1
+## Repo strategy (revised 2026-04-18)
+
+Monorepo: Studio lives inside the existing `movmarcos/weft` repo under a top-level `studio/` folder. The existing `weft.sln` stays untouched; CLI CI stays untouched. Studio has its own `studio/weft-studio.sln` and its own CI workflow triggered only on changes under `studio/**`. Projects in `studio/` reference `Weft.Core` via `<ProjectReference>` — no local NuGet feed, no pack step during development. The repo-level `Directory.Build.props` applies to Studio projects as-is (net10, nullable on, warnings-as-errors).
+
+All paths below are relative to the weft repo root (`/Users/marcosmagri/Documents/MUFG/weft/`).
+
+## File structure at end of v0.1 (new and modified files only)
 
 ```
-weft-studio/                          # new sibling repo
-├── .github/workflows/
-│   ├── ci.yml                        # matrix build + test per OS
-│   └── release.yml                   # deferred until v0.3
-├── Directory.Build.props             # shared project settings
-├── global.json                       # pin .NET 10 SDK
-├── LICENSE                           # MIT, matches weft
-├── README.md
-├── local-nugets/                     # .gitkeep only; populated by `dotnet pack`
-├── nuget.config                      # points at local-nugets + nuget.org
+.github/workflows/
+└── studio.yml                           # NEW — builds studio/weft-studio.sln
+
+studio/                                  # NEW top-level folder
 ├── weft-studio.sln
 └── src/
-│   ├── WeftStudio.App/               # Application layer (no Avalonia deps)
+│   ├── WeftStudio.App/                  # Application layer (no Avalonia deps)
 │   │   ├── WeftStudio.App.csproj
 │   │   ├── ModelSession.cs
 │   │   ├── Commands/
@@ -37,7 +37,7 @@ weft-studio/                          # new sibling repo
 │   │   ├── ChangeTracker.cs
 │   │   └── Persistence/
 │   │       └── BimSaver.cs
-│   └── WeftStudio.Ui/                # Avalonia UI + ReactiveUI
+│   └── WeftStudio.Ui/                   # Avalonia UI + ReactiveUI
 │       ├── WeftStudio.Ui.csproj
 │       ├── App.axaml(.cs)
 │       ├── Program.cs
@@ -61,8 +61,8 @@ weft-studio/                          # new sibling repo
 └── test/
     ├── WeftStudio.App.Tests/
     │   ├── WeftStudio.App.Tests.csproj
-    │   ├── fixtures/                 # copied from weft
-    │   │   └── simple.bim
+    │   ├── fixtures/                    # linked from weft/test/.../fixtures
+    │   │   └── simple.bim               # via <None Link="…"> in csproj
     │   ├── ModelSessionTests.cs
     │   ├── RenameMeasureCommandTests.cs
     │   ├── UpdateDaxCommandTests.cs
@@ -79,159 +79,125 @@ weft-studio/                          # new sibling repo
 - `WeftStudio.App` is pure logic, no UI framework reference. Fully unit-testable without Avalonia.
 - `WeftStudio.Ui` owns views + viewmodels. Depends on `WeftStudio.App`.
 - Tests separated by target: `App.Tests` is plain xUnit; `Ui.Tests` uses `Avalonia.Headless.XUnit`.
-
----
-
-## Pre-requisite (outside these tasks)
-
-The `weft` repo must build `Weft.Core` as a local NuGet package (it already has pack metadata from commit `c7b122a`). Running `dotnet pack src/Weft.Core/Weft.Core.csproj -c Release -o /path/to/weft-studio/local-nugets` produces `Weft.Core.<version>.nupkg`, which `nuget.config` in weft-studio then resolves. Document this in the weft-studio README (Task 2).
+- Fixtures come from the existing `test/Weft.Core.Tests/fixtures/` via `<None Link>` — no duplication.
 
 ---
 
 ## Phase 1 — Repo + solution + CI scaffold
 
-### Task 1: Create weft-studio repo with solution skeleton
+### Task 1: Create studio/ subfolder and empty solution
 
 **Files:**
-- Create: `weft-studio/global.json`
-- Create: `weft-studio/Directory.Build.props`
-- Create: `weft-studio/nuget.config`
-- Create: `weft-studio/weft-studio.sln`
-- Create: `weft-studio/LICENSE` (MIT, same text as `weft/LICENSE`)
-- Create: `weft-studio/.gitignore` (copy `weft/.gitignore`)
-- Create: `weft-studio/local-nugets/.gitkeep`
+- Create: `studio/weft-studio.sln`
 
-- [ ] **Step 1: Init repo and apply shared build props**
+All other infrastructure (LICENSE, `.gitignore`, `Directory.Build.props`, `global.json`) already exists at the weft repo root and applies automatically to anything under `studio/`.
+
+- [ ] **Step 1: Create the folder and empty solution**
 
 ```bash
-mkdir -p weft-studio && cd weft-studio
-git init
-```
-
-`global.json`:
-```json
-{
-  "sdk": { "version": "10.0.100", "rollForward": "latestFeature" }
-}
-```
-
-`Directory.Build.props`:
-```xml
-<Project>
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <InvariantGlobalization>true</InvariantGlobalization>
-    <Deterministic>true</Deterministic>
-  </PropertyGroup>
-</Project>
-```
-
-`nuget.config`:
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <packageSources>
-    <clear />
-    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-    <add key="local" value="./local-nugets" />
-  </packageSources>
-</configuration>
-```
-
-- [ ] **Step 2: Create empty solution**
-
-```bash
+mkdir -p studio
+cd studio
 dotnet new sln -n weft-studio
+cd ..
 ```
 
-- [ ] **Step 3: Verify solution opens cleanly**
+- [ ] **Step 2: Verify the solution builds clean (no projects yet)**
 
-Run: `dotnet build`
-Expected: no projects yet — output "Build succeeded. 0 Warning(s) 0 Error(s)".
+Run: `dotnet build studio/weft-studio.sln`
+Expected: "Build succeeded. 0 Warning(s) 0 Error(s)" (with no projects to build).
+
+- [ ] **Step 3: Verify shared build props are picked up**
+
+The repo-level `Directory.Build.props` sets `TargetFramework=net10.0`, `Nullable=enable`, `TreatWarningsAsErrors=true`, etc. Projects added under `studio/` in later tasks will inherit these. No file needs to be created in `studio/` to enable inheritance.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add .
-git commit -m "chore: scaffold weft-studio solution (net10, shared build props, local NuGet feed)"
+git add studio/
+git commit -m "chore(studio): scaffold studio/ subfolder with empty weft-studio.sln"
 ```
 
 ---
 
-### Task 2: Document local Weft.Core dependency in README
+### Task 2: Add studio/README.md
 
 **Files:**
-- Create: `weft-studio/README.md`
+- Create: `studio/README.md`
 
-- [ ] **Step 1: Write minimal README**
+- [ ] **Step 1: Write minimal README for the studio subfolder**
 
 ```markdown
 # Weft Studio
 
-Cross-platform desktop app for editing, visualizing, diffing, and deploying Power BI / Fabric semantic models. Sibling to the [`weft`](https://github.com/movmarcos/weft) CLI; shares `Weft.Core` as the engine.
+Cross-platform desktop app for editing, visualizing, diffing, and deploying Power BI / Fabric semantic models. Companion to the [`weft`](../README.md) CLI in this repo; shares `Weft.Core` as the engine.
 
 > **Status:** v0.1 in development. Not yet usable.
 
 ## Developing
 
-### Prerequisites
-- .NET 10 SDK
-- The `weft` repo checked out (currently required for `Weft.Core` — it will ship to nuget.org later).
+Studio lives in its own solution within the weft monorepo — the existing CLI solution (`weft.sln` at the repo root) is unaffected by work here.
 
-### First-time setup
+### Build and test
 
 ```bash
-# Build Weft.Core as a local NuGet package
-cd ../weft
-dotnet pack src/Weft.Core/Weft.Core.csproj -c Release \
-  -o ../weft-studio/local-nugets
-
-# Back in weft-studio
-cd ../weft-studio
-dotnet restore
-dotnet build
+# From the repo root
+dotnet build studio/weft-studio.sln
+dotnet test  studio/weft-studio.sln
 ```
 
 ### Running
 
 ```bash
-dotnet run --project src/WeftStudio.Ui
+dotnet run --project studio/src/WeftStudio.Ui
 ```
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see the repo-level [LICENSE](../LICENSE).
 ```
 
 - [ ] **Step 2: Commit**
 
 ```bash
-git add README.md
-git commit -m "docs: README with local-dev setup for Weft.Core dependency"
+git add studio/README.md
+git commit -m "docs(studio): add README for the studio/ subfolder"
 ```
 
 ---
 
-### Task 3: Scaffold CI workflow
+### Task 3: Scaffold Studio CI workflow
 
 **Files:**
-- Create: `weft-studio/.github/workflows/ci.yml`
+- Create: `.github/workflows/studio.yml`
 
-- [ ] **Step 1: Write CI matrix mirroring weft's**
+This workflow is path-scoped — it only runs when changes touch `studio/**` or the workflow file itself, so CLI-only PRs don't wait on Studio builds.
+
+- [ ] **Step 1: Write the workflow**
 
 ```yaml
-name: CI
+name: Studio CI
 
 on:
   push:
     branches: [main, master]
+    paths:
+      - 'studio/**'
+      - 'src/Weft.Core/**'
+      - 'src/Weft.Auth/**'
+      - 'src/Weft.Xmla/**'
+      - 'src/Weft.Config/**'
+      - '.github/workflows/studio.yml'
+      - 'Directory.Build.props'
   pull_request:
     branches: [main, master]
+    paths:
+      - 'studio/**'
+      - 'src/Weft.Core/**'
+      - 'src/Weft.Auth/**'
+      - 'src/Weft.Xmla/**'
+      - 'src/Weft.Config/**'
+      - '.github/workflows/studio.yml'
+      - 'Directory.Build.props'
 
 jobs:
   build-test:
@@ -242,40 +208,27 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          repository: movmarcos/weft
-          path: weft
-      - uses: actions/checkout@v4
-        with:
-          path: weft-studio
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - name: Pack Weft.Core locally
-        run: |
-          dotnet pack weft/src/Weft.Core/Weft.Core.csproj -c Release \
-            -o weft-studio/local-nugets
       - name: Restore
-        working-directory: weft-studio
-        run: dotnet restore
+        run: dotnet restore studio/weft-studio.sln
       - name: Build
-        working-directory: weft-studio
-        run: dotnet build --no-restore --configuration Release -warnaserror
+        run: dotnet build studio/weft-studio.sln --no-restore --configuration Release -warnaserror
       - name: Test
-        working-directory: weft-studio
-        run: dotnet test --no-build --configuration Release --logger "trx"
+        run: dotnet test studio/weft-studio.sln --no-build --configuration Release --logger "trx"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: trx-${{ matrix.os }}
-          path: weft-studio/**/TestResults/*.trx
+          path: 'studio/**/TestResults/*.trx'
 ```
 
 - [ ] **Step 2: Commit**
 
 ```bash
-git add .github/workflows/ci.yml
-git commit -m "ci: matrix build+test on ubuntu/windows/macos, packs Weft.Core from sibling repo"
+git add .github/workflows/studio.yml
+git commit -m "ci(studio): path-scoped matrix build+test on ubuntu/windows/macos"
 ```
 
 ---
@@ -285,51 +238,49 @@ git commit -m "ci: matrix build+test on ubuntu/windows/macos, packs Weft.Core fr
 ### Task 4: Create WeftStudio.App project
 
 **Files:**
-- Create: `src/WeftStudio.App/WeftStudio.App.csproj`
-- Modify: `weft-studio.sln`
+- Create: `studio/src/WeftStudio.App/WeftStudio.App.csproj`
+- Modify: `studio/weft-studio.sln`
 
 - [ ] **Step 1: Create class library**
 
 ```bash
+cd studio
 dotnet new classlib -o src/WeftStudio.App -n WeftStudio.App
 rm src/WeftStudio.App/Class1.cs
+cd ..
 ```
 
-- [ ] **Step 2: Edit csproj to add Weft.Core reference**
+- [ ] **Step 2: Edit csproj to ProjectReference Weft.Core**
 
+Replace the generated csproj with:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="Weft.Core" Version="1.0.0" />
+    <ProjectReference Include="..\..\..\src\Weft.Core\Weft.Core.csproj" />
   </ItemGroup>
 </Project>
 ```
 
-(`TargetFramework`, `Nullable`, etc. come from `Directory.Build.props`.)
+(`TargetFramework`, `Nullable`, `TreatWarningsAsErrors` etc. come from the repo-level `Directory.Build.props`. Path to Weft.Core is three levels up: `studio/src/WeftStudio.App/` → `../../..` lands at the repo root.)
 
-- [ ] **Step 3: Add to solution**
+- [ ] **Step 3: Add to Studio solution**
 
 ```bash
-dotnet sln add src/WeftStudio.App/WeftStudio.App.csproj
+dotnet sln studio/weft-studio.sln add studio/src/WeftStudio.App/WeftStudio.App.csproj
 ```
 
-- [ ] **Step 4: Verify restore pulls local Weft.Core**
+- [ ] **Step 4: Verify build**
 
-First produce the local package:
 ```bash
-dotnet pack ../weft/src/Weft.Core/Weft.Core.csproj -c Release -o local-nugets
+dotnet build studio/weft-studio.sln
 ```
-Then:
-```bash
-dotnet build src/WeftStudio.App
-```
-Expected: success, `Weft.Core` resolved from `./local-nugets`.
+Expected: success — `Weft.Core` resolved via ProjectReference, no NuGet fetch needed.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/WeftStudio.App weft-studio.sln
-git commit -m "feat(app): scaffold WeftStudio.App class library with Weft.Core reference"
+git add studio/src/WeftStudio.App studio/weft-studio.sln
+git commit -m "feat(studio/app): scaffold WeftStudio.App class library referencing Weft.Core"
 ```
 
 ---
@@ -337,18 +288,23 @@ git commit -m "feat(app): scaffold WeftStudio.App class library with Weft.Core r
 ### Task 5: Create test project for WeftStudio.App
 
 **Files:**
-- Create: `test/WeftStudio.App.Tests/WeftStudio.App.Tests.csproj`
-- Modify: `weft-studio.sln`
+- Create: `studio/test/WeftStudio.App.Tests/WeftStudio.App.Tests.csproj`
+- Modify: `studio/weft-studio.sln`
 
 - [ ] **Step 1: Create xunit project**
 
 ```bash
+cd studio
 dotnet new xunit -o test/WeftStudio.App.Tests -n WeftStudio.App.Tests
 rm test/WeftStudio.App.Tests/UnitTest1.cs
+cd ..
 ```
 
-- [ ] **Step 2: Edit csproj with FluentAssertions**
+- [ ] **Step 2: Replace csproj with FluentAssertions + linked fixture**
 
+Before writing this csproj, locate a simple .bim fixture already in the weft repo. Check `test/Weft.Core.Tests/fixtures/models/` — use whichever simple model is there (e.g. `simple/simple.bim`). Adjust the `<None Include>` path accordingly.
+
+Replace the generated csproj with:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -360,39 +316,38 @@ rm test/WeftStudio.App.Tests/UnitTest1.cs
   <ItemGroup>
     <ProjectReference Include="..\..\src\WeftStudio.App\WeftStudio.App.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Link (don't copy) the existing Weft.Core fixture into this test project's output -->
+    <None Include="..\..\..\test\Weft.Core.Tests\fixtures\models\simple\simple.bim"
+          Link="fixtures\simple.bim">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
 ```
 
-- [ ] **Step 3: Copy the simple.bim fixture**
+If the simple fixture lives at a different path under `test/Weft.Core.Tests/fixtures/`, update the `<None Include>` path. If there is no simple single-table `.bim` there, fall back to copying one from the `samples/` folder (e.g. `samples/01-simple-bim/model.bim`) with a `<None Include="..\..\..\samples\01-simple-bim\model.bim" Link="fixtures\simple.bim">` entry instead.
+
+- [ ] **Step 3: Add to solution and verify**
 
 ```bash
-mkdir -p test/WeftStudio.App.Tests/fixtures
-cp ../weft/test/Weft.Core.Tests/fixtures/models/simple/simple.bim \
-   test/WeftStudio.App.Tests/fixtures/simple.bim
+dotnet sln studio/weft-studio.sln add studio/test/WeftStudio.App.Tests/WeftStudio.App.Tests.csproj
+dotnet test studio/weft-studio.sln
 ```
+Expected: "0 total" (no tests yet).
 
-Add to the csproj:
-```xml
-<ItemGroup>
-  <None Update="fixtures\**\*">
-    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-  </None>
-</ItemGroup>
-```
-
-- [ ] **Step 4: Add to solution and verify**
+- [ ] **Step 4: Verify fixture lands in test output**
 
 ```bash
-dotnet sln add test/WeftStudio.App.Tests/WeftStudio.App.Tests.csproj
-dotnet test test/WeftStudio.App.Tests
+ls studio/test/WeftStudio.App.Tests/bin/Debug/net10.0/fixtures/
 ```
-Expected: "0 total".
+Expected: `simple.bim` present.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add test weft-studio.sln
-git commit -m "test(app): scaffold WeftStudio.App.Tests with xunit + FluentAssertions + fixture"
+git add studio/test studio/weft-studio.sln
+git commit -m "test(studio/app): scaffold WeftStudio.App.Tests with linked fixture"
 ```
 
 ---
@@ -400,8 +355,8 @@ git commit -m "test(app): scaffold WeftStudio.App.Tests with xunit + FluentAsser
 ### Task 6: ModelSession loads a .bim and exposes the Database
 
 **Files:**
-- Create: `src/WeftStudio.App/ModelSession.cs`
-- Create: `test/WeftStudio.App.Tests/ModelSessionTests.cs`
+- Create: `studio/src/WeftStudio.App/ModelSession.cs`
+- Create: `studio/test/WeftStudio.App.Tests/ModelSessionTests.cs`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -494,7 +449,7 @@ git commit -m "feat(app): ModelSession.OpenBim wraps Weft.Core loader + TOM Data
 ### Task 7: ModelCommand abstraction
 
 **Files:**
-- Create: `src/WeftStudio.App/Commands/ModelCommand.cs`
+- Create: `studio/src/WeftStudio.App/Commands/ModelCommand.cs`
 
 This task introduces types used by Tasks 8 and 9. No test of its own — tests exist via the concrete commands.
 
@@ -531,8 +486,8 @@ git commit -m "feat(app): ModelCommand abstraction (Apply / Revert / Description
 ### Task 8: RenameMeasureCommand with round-trip tests
 
 **Files:**
-- Create: `src/WeftStudio.App/Commands/RenameMeasureCommand.cs`
-- Create: `test/WeftStudio.App.Tests/RenameMeasureCommandTests.cs`
+- Create: `studio/src/WeftStudio.App/Commands/RenameMeasureCommand.cs`
+- Create: `studio/test/WeftStudio.App.Tests/RenameMeasureCommandTests.cs`
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -664,8 +619,8 @@ git commit -m "feat(app): RenameMeasureCommand with duplicate-name guard and rev
 ### Task 9: ChangeTracker with undo/redo
 
 **Files:**
-- Modify: `src/WeftStudio.App/ChangeTracker.cs`
-- Create: `test/WeftStudio.App.Tests/ChangeTrackerTests.cs`
+- Modify: `studio/src/WeftStudio.App/ChangeTracker.cs`
+- Create: `studio/test/WeftStudio.App.Tests/ChangeTrackerTests.cs`
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -817,8 +772,8 @@ git commit -m "feat(app): ChangeTracker with undo/redo/dirty-tracking + 5 tests"
 ### Task 10: UpdateDaxCommand
 
 **Files:**
-- Create: `src/WeftStudio.App/Commands/UpdateDaxCommand.cs`
-- Create: `test/WeftStudio.App.Tests/UpdateDaxCommandTests.cs`
+- Create: `studio/src/WeftStudio.App/Commands/UpdateDaxCommand.cs`
+- Create: `studio/test/WeftStudio.App.Tests/UpdateDaxCommandTests.cs`
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -927,8 +882,8 @@ git commit -m "feat(app): UpdateDaxCommand with round-trip + 3 tests"
 ### Task 11: BimSaver writes model back to disk
 
 **Files:**
-- Create: `src/WeftStudio.App/Persistence/BimSaver.cs`
-- Create: `test/WeftStudio.App.Tests/BimSaverTests.cs`
+- Create: `studio/src/WeftStudio.App/Persistence/BimSaver.cs`
+- Create: `studio/test/WeftStudio.App.Tests/BimSaverTests.cs`
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1006,7 +961,7 @@ public class BimSaverTests
 
 The third test requires ModelSession to expose a non-public constructor for tests. Two changes needed (applied in Step 3):
 
-1. In `src/WeftStudio.App/WeftStudio.App.csproj`, expose internals to the test project:
+1. In `studio/src/WeftStudio.App/WeftStudio.App.csproj`, expose internals to the test project:
 
 ```xml
 <ItemGroup>
@@ -1014,7 +969,7 @@ The third test requires ModelSession to expose a non-public constructor for test
 </ItemGroup>
 ```
 
-2. In `src/WeftStudio.App/ModelSession.cs`, change the constructor from `private` to `internal`:
+2. In `studio/src/WeftStudio.App/ModelSession.cs`, change the constructor from `private` to `internal`:
 
 ```csharp
 internal ModelSession(Database db, string? sourcePath)
@@ -1072,10 +1027,10 @@ git commit -m "feat(app): BimSaver serializes TOM Database back to .bim and mark
 ### Task 12: Create WeftStudio.Ui project with Avalonia + ReactiveUI
 
 **Files:**
-- Create: `src/WeftStudio.Ui/WeftStudio.Ui.csproj`
-- Create: `src/WeftStudio.Ui/Program.cs`
-- Create: `src/WeftStudio.Ui/App.axaml`
-- Create: `src/WeftStudio.Ui/App.axaml.cs`
+- Create: `studio/src/WeftStudio.Ui/WeftStudio.Ui.csproj`
+- Create: `studio/src/WeftStudio.Ui/Program.cs`
+- Create: `studio/src/WeftStudio.Ui/App.axaml`
+- Create: `studio/src/WeftStudio.Ui/App.axaml.cs`
 - Modify: `weft-studio.sln`
 
 - [ ] **Step 1: Create Avalonia MVVM template**
@@ -1136,8 +1091,8 @@ git commit -m "feat(ui): scaffold WeftStudio.Ui with Avalonia 11 + ReactiveUI + 
 ### Task 13: Create WeftStudio.Ui.Tests with Avalonia.Headless
 
 **Files:**
-- Create: `test/WeftStudio.Ui.Tests/WeftStudio.Ui.Tests.csproj`
-- Create: `test/WeftStudio.Ui.Tests/HeadlessAppBuilder.cs`
+- Create: `studio/test/WeftStudio.Ui.Tests/WeftStudio.Ui.Tests.csproj`
+- Create: `studio/test/WeftStudio.Ui.Tests/HeadlessAppBuilder.cs`
 
 - [ ] **Step 1: Create xunit project**
 
@@ -1203,8 +1158,8 @@ git commit -m "test(ui): scaffold UI tests with Avalonia.Headless.XUnit"
 ### Task 14: ShellViewModel exposes active-mode state
 
 **Files:**
-- Create: `src/WeftStudio.Ui/Shell/ShellViewModel.cs`
-- Create: `test/WeftStudio.Ui.Tests/ShellViewModelTests.cs`
+- Create: `studio/src/WeftStudio.Ui/Shell/ShellViewModel.cs`
+- Create: `studio/test/WeftStudio.Ui.Tests/ShellViewModelTests.cs`
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1283,11 +1238,11 @@ git commit -m "feat(ui): ShellViewModel with ActivityMode state + ReactiveUI"
 ### Task 15: ShellWindow with activity bar (visual only, Explorer placeholder)
 
 **Files:**
-- Create: `src/WeftStudio.Ui/Shell/ShellWindow.axaml`
-- Create: `src/WeftStudio.Ui/Shell/ShellWindow.axaml.cs`
-- Create: `src/WeftStudio.Ui/Shell/ActivityBar.axaml`
-- Create: `src/WeftStudio.Ui/Shell/ActivityBar.axaml.cs`
-- Modify: `src/WeftStudio.Ui/App.axaml.cs`
+- Create: `studio/src/WeftStudio.Ui/Shell/ShellWindow.axaml`
+- Create: `studio/src/WeftStudio.Ui/Shell/ShellWindow.axaml.cs`
+- Create: `studio/src/WeftStudio.Ui/Shell/ActivityBar.axaml`
+- Create: `studio/src/WeftStudio.Ui/Shell/ActivityBar.axaml.cs`
+- Modify: `studio/src/WeftStudio.Ui/App.axaml.cs`
 
 This task is a visual-only scaffold. Verification is "it runs and looks right"; no VM tests.
 
@@ -1407,9 +1362,9 @@ git commit -m "feat(ui): ShellWindow + ActivityBar scaffolded with 4-column layo
 ### Task 16: ExplorerViewModel builds tree from a ModelSession
 
 **Files:**
-- Create: `src/WeftStudio.Ui/Explorer/ExplorerViewModel.cs`
-- Create: `src/WeftStudio.Ui/Explorer/TreeNode.cs`
-- Create: `test/WeftStudio.Ui.Tests/ExplorerViewModelTests.cs`
+- Create: `studio/src/WeftStudio.Ui/Explorer/ExplorerViewModel.cs`
+- Create: `studio/src/WeftStudio.Ui/Explorer/TreeNode.cs`
+- Create: `studio/test/WeftStudio.Ui.Tests/ExplorerViewModelTests.cs`
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1563,11 +1518,11 @@ git commit -m "feat(ui): ExplorerViewModel builds tree (Tables / Measures / Rela
 ### Task 17: ExplorerView renders the tree; wire into Shell
 
 **Files:**
-- Create: `src/WeftStudio.Ui/Explorer/ExplorerView.axaml`
-- Create: `src/WeftStudio.Ui/Explorer/ExplorerView.axaml.cs`
-- Modify: `src/WeftStudio.Ui/Shell/ShellWindow.axaml` (replace placeholder)
-- Modify: `src/WeftStudio.Ui/Shell/ShellViewModel.cs` (expose Explorer VM)
-- Modify: `src/WeftStudio.Ui/App.axaml.cs` (open a default file at startup for demoable v0.1)
+- Create: `studio/src/WeftStudio.Ui/Explorer/ExplorerView.axaml`
+- Create: `studio/src/WeftStudio.Ui/Explorer/ExplorerView.axaml.cs`
+- Modify: `studio/src/WeftStudio.Ui/Shell/ShellWindow.axaml` (replace placeholder)
+- Modify: `studio/src/WeftStudio.Ui/Shell/ShellViewModel.cs` (expose Explorer VM)
+- Modify: `studio/src/WeftStudio.Ui/App.axaml.cs` (open a default file at startup for demoable v0.1)
 
 Shell startup flow for v0.1: accept an optional `.bim` path as command-line arg, otherwise show a "No file open" placeholder. Full File-menu lands in Task 19.
 
@@ -1689,10 +1644,10 @@ git commit -m "feat(ui): ExplorerView wired to ShellViewModel.Explorer; CLI-arg 
 ### Task 18: DaxEditorViewModel and DAX syntax highlighting resource
 
 **Files:**
-- Create: `src/WeftStudio.Ui/DaxEditor/DaxEditorViewModel.cs`
-- Create: `src/WeftStudio.Ui/DaxEditor/DaxSyntaxHighlighting.xshd`
-- Create: `src/WeftStudio.Ui/DaxEditor/DaxEditorView.axaml` + `.cs`
-- Modify: `src/WeftStudio.Ui/WeftStudio.Ui.csproj` (embed the xshd)
+- Create: `studio/src/WeftStudio.Ui/DaxEditor/DaxEditorViewModel.cs`
+- Create: `studio/src/WeftStudio.Ui/DaxEditor/DaxSyntaxHighlighting.xshd`
+- Create: `studio/src/WeftStudio.Ui/DaxEditor/DaxEditorView.axaml` + `.cs`
+- Modify: `studio/src/WeftStudio.Ui/WeftStudio.Ui.csproj` (embed the xshd)
 
 The DAX grammar covers a minimal set for v0.1: keywords (`TRUE`, `FALSE`, `NOT`, `AND`, `OR`, `IF`, ...), top-level functions (`SUM`, `CALCULATE`, `FILTER`, ...), string literals, numeric literals, comments (`--`, `/* */`), brackets, operators. Extending the function list later is a pure-data change.
 
@@ -1936,10 +1891,10 @@ git commit -m "feat(ui): DaxEditor (AvaloniaEdit + xshd DAX grammar) + VM tests"
 ### Task 19: Click a measure in Explorer → open DAX editor tab
 
 **Files:**
-- Modify: `src/WeftStudio.Ui/Shell/ShellViewModel.cs` (add OpenTabs collection + OpenMeasure method)
-- Modify: `src/WeftStudio.Ui/Shell/ShellWindow.axaml` (replace "Editor tabs" placeholder with TabControl)
-- Modify: `src/WeftStudio.Ui/Explorer/ExplorerView.axaml` (double-click binds to open)
-- Modify: `src/WeftStudio.Ui/Explorer/ExplorerView.axaml.cs` (raise open event to Shell)
+- Modify: `studio/src/WeftStudio.Ui/Shell/ShellViewModel.cs` (add OpenTabs collection + OpenMeasure method)
+- Modify: `studio/src/WeftStudio.Ui/Shell/ShellWindow.axaml` (replace "Editor tabs" placeholder with TabControl)
+- Modify: `studio/src/WeftStudio.Ui/Explorer/ExplorerView.axaml` (double-click binds to open)
+- Modify: `studio/src/WeftStudio.Ui/Explorer/ExplorerView.axaml.cs` (raise open event to Shell)
 
 - [ ] **Step 1: Write a failing VM test for OpenMeasure**
 
@@ -2120,11 +2075,11 @@ git commit -m "feat(ui): Explorer double-click opens DAX editor tab via ShellVie
 ### Task 20: InspectorViewModel shows selected-measure properties
 
 **Files:**
-- Create: `src/WeftStudio.Ui/Inspector/InspectorViewModel.cs`
-- Create: `src/WeftStudio.Ui/Inspector/InspectorView.axaml` + `.cs`
-- Create: `test/WeftStudio.Ui.Tests/InspectorViewModelTests.cs`
-- Modify: `src/WeftStudio.Ui/Shell/ShellViewModel.cs` (expose Inspector property, sync to ActiveTab)
-- Modify: `src/WeftStudio.Ui/Shell/ShellWindow.axaml` (right-column placeholder → InspectorView)
+- Create: `studio/src/WeftStudio.Ui/Inspector/InspectorViewModel.cs`
+- Create: `studio/src/WeftStudio.Ui/Inspector/InspectorView.axaml` + `.cs`
+- Create: `studio/test/WeftStudio.Ui.Tests/InspectorViewModelTests.cs`
+- Modify: `studio/src/WeftStudio.Ui/Shell/ShellViewModel.cs` (expose Inspector property, sync to ActiveTab)
+- Modify: `studio/src/WeftStudio.Ui/Shell/ShellWindow.axaml` (right-column placeholder → InspectorView)
 
 - [ ] **Step 1: Write failing InspectorViewModel tests**
 
@@ -2305,9 +2260,9 @@ git commit -m "feat(ui): InspectorView for measure rename; ShellVM syncs Inspect
 ### Task 21: File menu — Open, Save, Save As, Exit
 
 **Files:**
-- Modify: `src/WeftStudio.Ui/Shell/ShellWindow.axaml` (add Menu at top)
-- Modify: `src/WeftStudio.Ui/Shell/ShellViewModel.cs` (add commands)
-- Modify: `src/WeftStudio.Ui/Shell/ShellWindow.axaml.cs` (file picker invocation)
+- Modify: `studio/src/WeftStudio.Ui/Shell/ShellWindow.axaml` (add Menu at top)
+- Modify: `studio/src/WeftStudio.Ui/Shell/ShellViewModel.cs` (add commands)
+- Modify: `studio/src/WeftStudio.Ui/Shell/ShellWindow.axaml.cs` (file picker invocation)
 
 - [ ] **Step 1: Add commands on ShellViewModel**
 
@@ -2439,8 +2394,8 @@ git commit -m "feat(ui): File menu (Open / Save / Exit) wired to SaveCommand + n
 ### Task 22: SettingsStore persists recent files
 
 **Files:**
-- Create: `src/WeftStudio.Ui/Settings/SettingsStore.cs`
-- Create: `test/WeftStudio.Ui.Tests/SettingsStoreTests.cs`
+- Create: `studio/src/WeftStudio.Ui/Settings/SettingsStore.cs`
+- Create: `studio/test/WeftStudio.Ui.Tests/SettingsStoreTests.cs`
 
 - [ ] **Step 1: Write failing tests**
 
@@ -2559,8 +2514,8 @@ git commit -m "feat(ui): SettingsStore with recent-files; ShellVM appends on ope
 ### Task 23: Status bar reflects dirty state + model name
 
 **Files:**
-- Modify: `src/WeftStudio.Ui/Shell/ShellViewModel.cs`
-- Modify: `src/WeftStudio.Ui/Shell/ShellWindow.axaml`
+- Modify: `studio/src/WeftStudio.Ui/Shell/ShellViewModel.cs`
+- Modify: `studio/src/WeftStudio.Ui/Shell/ShellWindow.axaml`
 
 - [ ] **Step 1: Expose status-bar strings on ShellViewModel**
 
@@ -2610,7 +2565,7 @@ git commit -m "feat(ui): status bar reflects current model name + dirty state"
 ### Task 24: End-to-end smoke test
 
 **Files:**
-- Create: `test/WeftStudio.Ui.Tests/EndToEndSmokeTests.cs`
+- Create: `studio/test/WeftStudio.Ui.Tests/EndToEndSmokeTests.cs`
 
 This task validates the v0.1 gesture: open → double-click → edit → save → reload preserves change.
 

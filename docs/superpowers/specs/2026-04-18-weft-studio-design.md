@@ -57,9 +57,13 @@ Weft Studio is a cross-platform desktop application that edits, visualizes, diff
 
 **Key invariant:** the UI layer never touches TOM directly. All model access goes through `ModelSession`. This keeps the GUI and CLI behaviorally identical, and makes ViewModels testable without an Avalonia window.
 
-**Repo strategy:** `movmarcos/weft-studio` — a new sibling repo to `movmarcos/weft`, consuming `Weft.Core`, `Weft.Auth`, `Weft.Xmla`, `Weft.Config` as published NuGet packages. Separate repo chosen because release cadence differs, CI-only users should not pull a desktop app installer, and weft's CI stays lean.
+**Repo strategy:** monorepo — Studio lives inside the existing `movmarcos/weft` repo under a top-level `studio/` folder with its own `studio/weft-studio.sln`. The existing `weft.sln` stays unchanged; CLI CI (`ci.yml`) is untouched. A new `.github/workflows/studio.yml` workflow builds `studio/weft-studio.sln` and is triggered only on changes under `studio/**`. Studio projects consume `Weft.Core`, `Weft.Auth`, `Weft.Xmla`, `Weft.Config` via `<ProjectReference>` — no NuGet pack step needed during development.
 
-**Consequence for `weft` (existing repo):** the NuGet publish step for `Weft.Core` is already wired (`release-artifacts.yml`). Similar packaging must be added for `Weft.Auth`, `Weft.Xmla`, and `Weft.Config`. `InternalsVisibleTo("WeftStudio.App")` may be needed for types the CLI keeps private but Studio needs.
+Rationale for monorepo (superseding the earlier sibling-repo draft): at this stage there are zero external users whose workflow would be disrupted, so the "CI-only users shouldn't pull a desktop app" argument is theoretical. In exchange the monorepo removes an entire NuGet-packaging dance, lets a single PR span both CLI and Studio when they change together, and keeps the spec / plan / source all co-located. If Studio's release cadence later diverges sharply from the CLI, splitting the repo is a mechanical refactor.
+
+**Consequence for CLI code:** `InternalsVisibleTo("WeftStudio.App")` may be needed for types Weft.Core keeps private but Studio needs — added to the relevant Core `.csproj` as those cases arise.
+
+**Shared build properties:** Studio projects inherit the repo-level `Directory.Build.props` (net10.0, nullable on, warnings-as-errors). No Studio-specific override in v0.1.
 
 ## 4. Components
 
