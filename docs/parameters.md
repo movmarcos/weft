@@ -1,3 +1,13 @@
+---
+title: Parameters
+eyebrow: Parameters · Reference
+order: 3
+color: green
+icon: "{ }"
+related:
+  - partition-preservation
+  - hooks
+---
 # Parameters
 
 Weft auto-discovers every M parameter in your source model and lets you override its value per environment.

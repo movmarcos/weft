@@ -1,3 +1,14 @@
+---
+title: Incremental refresh
+eyebrow: Refresh · Safety-critical
+order: 5
+color: pink
+icon: "↻"
+related:
+  - partition-preservation
+  - restore-history
+  - troubleshooting
+---
 # Incremental refresh
 
 Weft understands Power BI's `RefreshPolicy` object and treats incremental-refresh tables specially.

@@ -1,3 +1,13 @@
+---
+title: Authentication
+eyebrow: Auth · Reference
+order: 2
+color: green
+icon: "↯"
+related:
+  - parameters
+  - troubleshooting
+---
 # Authentication
 
 Weft supports five AAD flows, all via MSAL.

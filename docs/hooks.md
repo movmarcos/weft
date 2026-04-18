@@ -1,3 +1,13 @@
+---
+title: Hooks
+eyebrow: Hooks · Practical
+order: 7
+color: gold
+icon: "⚓"
+related:
+  - getting-started
+  - troubleshooting
+---
 # Hooks
 
 Weft fires hooks at six pipeline phases. Each hook is an external command you configure in `weft.yaml`.

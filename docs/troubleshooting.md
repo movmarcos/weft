@@ -1,3 +1,14 @@
+---
+title: Troubleshooting
+eyebrow: Troubleshoot · Safety-critical
+order: 8
+color: pink
+icon: "!"
+related:
+  - hooks
+  - partition-preservation
+  - incremental-refresh
+---
 # Troubleshooting
 
 ## Exit codes

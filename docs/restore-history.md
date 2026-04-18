@@ -1,3 +1,14 @@
+---
+title: Restore history
+eyebrow: Restore · Safety-critical
+order: 6
+color: pink
+icon: "⤴"
+related:
+  - partition-preservation
+  - incremental-refresh
+  - troubleshooting
+---
 # Restore history
 
 If historical partitions are missing — because of a manual `allowHistoryLoss` shrink, a botched deploy, or a warehouse re-seed — `weft restore-history` re-materializes them.

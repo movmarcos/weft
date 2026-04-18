@@ -485,3 +485,5 @@ $RECYCLE.BIN/
 artifacts/
 *.user
 .vs/
+web/dist/
+web/node_modules/

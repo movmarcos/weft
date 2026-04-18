@@ -1,3 +1,14 @@
+---
+title: Getting started with Weft
+eyebrow: Quickstart · Practical
+order: 1
+color: gold
+icon: "↦"
+related:
+  - authentication
+  - parameters
+  - hooks
+---
 # Getting started with Weft
 
 This walkthrough deploys a tiny model to your own Power BI Premium workspace.

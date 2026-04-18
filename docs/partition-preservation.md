@@ -1,3 +1,14 @@
+---
+title: Partition preservation — the core guarantee
+eyebrow: Partitions · Safety-critical
+order: 4
+color: pink
+icon: "▦"
+related:
+  - incremental-refresh
+  - restore-history
+  - troubleshooting
+---
 # Partition preservation — the core guarantee
 
 This is Weft's load-bearing promise: **no partition created by a prior refresh is dropped by a deploy.**

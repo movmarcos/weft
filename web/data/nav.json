@@ -1,0 +1,12 @@
+{
+  "docs": [
+    { "slug": "getting-started", "file": "../docs/getting-started.md" },
+    { "slug": "authentication", "file": "../docs/authentication.md" },
+    { "slug": "parameters", "file": "../docs/parameters.md" },
+    { "slug": "partition-preservation", "file": "../docs/partition-preservation.md" },
+    { "slug": "incremental-refresh", "file": "../docs/incremental-refresh.md" },
+    { "slug": "restore-history", "file": "../docs/restore-history.md" },
+    { "slug": "hooks", "file": "../docs/hooks.md" },
+    { "slug": "troubleshooting", "file": "../docs/troubleshooting.md" }
+  ]
+}
