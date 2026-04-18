@@ -1,6 +1,8 @@
 // Copyright (c) Marcos Magri / Weft contributors. All rights reserved.
 // Licensed under the MIT License.
 
+using Weft.Core.Parameters;
+
 namespace Weft.Config;
 
 public sealed record WeftConfig(

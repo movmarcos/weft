@@ -1,7 +1,7 @@
 // Copyright (c) Marcos Magri / Weft contributors. All rights reserved.
 // Licensed under the MIT License.
 
-namespace Weft.Config;
+namespace Weft.Core.Parameters;
 
 public sealed record ParameterDeclaration(
     string Name,
