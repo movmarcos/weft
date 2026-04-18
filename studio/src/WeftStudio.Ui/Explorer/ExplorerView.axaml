@@ -1,0 +1,13 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:explorer="using:WeftStudio.Ui.Explorer"
+             x:Class="WeftStudio.Ui.Explorer.ExplorerView"
+             x:DataType="explorer:ExplorerViewModel">
+  <TreeView Name="Tree" ItemsSource="{Binding Roots}">
+    <TreeView.ItemTemplate>
+      <TreeDataTemplate ItemsSource="{Binding Children}">
+        <TextBlock Text="{Binding DisplayName}"/>
+      </TreeDataTemplate>
+    </TreeView.ItemTemplate>
+  </TreeView>
+</UserControl>
