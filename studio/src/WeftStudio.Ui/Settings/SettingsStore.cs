@@ -19,10 +19,19 @@ public sealed class SettingsStore
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                      "WeftStudio");
 
-    public Settings Load() =>
-        File.Exists(_path)
-            ? JsonSerializer.Deserialize<Settings>(File.ReadAllText(_path)) ?? new Settings()
-            : new Settings();
+    public Settings Load()
+    {
+        if (!File.Exists(_path)) return new Settings();
+        try
+        {
+            return JsonSerializer.Deserialize<Settings>(File.ReadAllText(_path)) ?? new Settings();
+        }
+        catch (JsonException)
+        {
+            // Corrupted settings — return clean defaults rather than crashing.
+            return new Settings();
+        }
+    }
 
     public void Save(Settings s) =>
         File.WriteAllText(_path, JsonSerializer.Serialize(s,
