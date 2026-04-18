@@ -197,7 +197,7 @@ public static class DeployCommand
         }
 
         // 6. pre-plan hook
-        await RunHookAsync(profile.Hooks.PrePlan, HookPhase.PrePlan, profile, plan.ChangeSet);
+        await RunHookAsync(profile.Hooks.PrePlan, HookPhase.PrePlan, profile, plan.ChangeSet, writer);
 
         if (plan.ChangeSet.IsEmpty)
             writer.Info("Nothing to deploy.");
@@ -209,7 +209,7 @@ public static class DeployCommand
         await File.WriteAllTextAsync(planPath, plan.TmslJson, cancellationToken);
 
         // 8. pre-deploy hook + execute
-        await RunHookAsync(profile.Hooks.PreDeploy, HookPhase.PreDeploy, profile, plan.ChangeSet);
+        await RunHookAsync(profile.Hooks.PreDeploy, HookPhase.PreDeploy, profile, plan.ChangeSet, writer);
 
         if (!plan.ChangeSet.IsEmpty)
         {
@@ -218,7 +218,7 @@ public static class DeployCommand
             foreach (var m in exec.Messages) writer.Info(m);
             if (!exec.Success)
             {
-                await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
+                await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet, writer);
                 writer.Error("TMSL execution failed.");
                 return ExitCodes.TmslExecutionError;
             }
@@ -236,7 +236,7 @@ public static class DeployCommand
             if (droppedTables.Contains(tableName)) continue;
             if (!postManifest.Tables.TryGetValue(tableName, out var postPartitions))
             {
-                await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
+                await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet, writer);
                 writer.Error($"Partition integrity violation: table '{tableName}' missing post-deploy.");
                 return ExitCodes.PartitionIntegrityError;
             }
@@ -244,7 +244,7 @@ public static class DeployCommand
             var missing = prePartitions.Where(p => !postNames.Contains(p.Name)).Select(p => p.Name).ToList();
             if (missing.Count > 0)
             {
-                await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
+                await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet, writer);
                 writer.Error(
                     $"Partition integrity violation on '{tableName}': missing post-deploy: {string.Join(", ", missing)}");
                 return ExitCodes.PartitionIntegrityError;
@@ -252,7 +252,7 @@ public static class DeployCommand
         }
 
         // 10. Bookmark clearing + pre-refresh hook + refresh
-        await RunHookAsync(profile.Hooks.PreRefresh, HookPhase.PreRefresh, profile, plan.ChangeSet);
+        await RunHookAsync(profile.Hooks.PreRefresh, HookPhase.PreRefresh, profile, plan.ChangeSet, writer);
 
         if (!profile.NoRefresh && !plan.ChangeSet.IsEmpty)
         {
@@ -274,7 +274,7 @@ public static class DeployCommand
                         profile.WorkspaceUrl, profile.DatabaseName, token, clearTmsl, cancellationToken);
                     if (!clearRes.Success)
                     {
-                        await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
+                        await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet, writer);
                         writer.Error("Bookmark clearing failed.");
                         return ExitCodes.RefreshError;
                     }
@@ -287,14 +287,14 @@ public static class DeployCommand
                 cancellationToken: cancellationToken);
             if (!rrx.Success)
             {
-                await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet);
+                await RunHookAsync(profile.Hooks.OnFailure, HookPhase.OnFailure, profile, plan.ChangeSet, writer);
                 writer.Error("Refresh failed.");
                 return ExitCodes.RefreshError;
             }
         }
 
-        await RunHookAsync(profile.Hooks.PostRefresh, HookPhase.PostRefresh, profile, plan.ChangeSet);
-        await RunHookAsync(profile.Hooks.PostDeploy, HookPhase.PostDeploy, profile, plan.ChangeSet);
+        await RunHookAsync(profile.Hooks.PostRefresh, HookPhase.PostRefresh, profile, plan.ChangeSet, writer);
+        await RunHookAsync(profile.Hooks.PostDeploy, HookPhase.PostDeploy, profile, plan.ChangeSet, writer);
 
         // 11. Receipt
         var receipt = new
@@ -317,7 +317,12 @@ public static class DeployCommand
         return ExitCodes.Success;
     }
 
-    private static async Task RunHookAsync(string? command, HookPhase phase, ResolvedProfile profile, ChangeSet changeSet)
+    private static async Task RunHookAsync(
+        string? command,
+        HookPhase phase,
+        ResolvedProfile profile,
+        ChangeSet changeSet,
+        IConsoleWriter writer)
     {
         if (string.IsNullOrWhiteSpace(command)) return;
         try
@@ -325,14 +330,14 @@ public static class DeployCommand
             var ctx = new HookContext(profile.ProfileName, profile.WorkspaceUrl, profile.DatabaseName, phase,
                 ChangeSetSnapshot.From(changeSet));
             var result = await new HookRunner().RunAsync(new HookDefinition(phase, command), ctx);
-            if (!string.IsNullOrEmpty(result.Stdout)) Console.Out.WriteLine(result.Stdout);
-            if (!string.IsNullOrEmpty(result.Stderr)) Console.Error.WriteLine(result.Stderr);
+            if (!string.IsNullOrEmpty(result.Stdout)) writer.Info(result.Stdout);
+            if (!string.IsNullOrEmpty(result.Stderr)) writer.Error(result.Stderr);
             if (result.ExitCode != 0)
-                Console.Error.WriteLine($"Hook '{phase}' exited {result.ExitCode} (non-fatal).");
+                writer.Error($"Hook '{phase}' exited {result.ExitCode} (non-fatal).");
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Hook '{phase}' failed: {ex.Message} (continuing).");
+            writer.Error($"Hook '{phase}' failed: {ex.Message} (continuing).");
         }
     }
 }

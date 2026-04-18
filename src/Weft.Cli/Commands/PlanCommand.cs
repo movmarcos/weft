@@ -3,6 +3,7 @@
 
 using System.CommandLine;
 using Weft.Cli.Options;
+using Weft.Config;
 using Weft.Core;
 using Weft.Core.Loading;
 
@@ -12,15 +13,35 @@ public static class PlanCommand
 {
     public static Command Build()
     {
-        var src = CommonOptions.SourceOption();
+        var src = new Option<string?>("--source", "-s") { Description = "Path to source .bim or TE folder." };
         var tgt = new Option<string>("--target-snapshot")
             { Description = "Path to a .bim snapshot of the target (offline plan).", Required = true };
         var artifacts = CommonOptions.ArtifactsOption();
+        var configOpt = CommonOptions.ConfigFileOption();
+        var targetOpt = CommonOptions.TargetProfileOption();
 
         var cmd = new Command("plan", "Compute and print a deploy plan; write TMSL to artifacts.");
         cmd.Options.Add(src); cmd.Options.Add(tgt); cmd.Options.Add(artifacts);
+        cmd.Options.Add(configOpt); cmd.Options.Add(targetOpt);
         cmd.SetAction(async (parse, ct) =>
-            await RunAsync(parse.GetValue(src)!, parse.GetValue(tgt)!, parse.GetValue(artifacts)!));
+        {
+            WeftConfig? config = null;
+            var configPath = parse.GetValue(configOpt);
+            if (!string.IsNullOrEmpty(configPath))
+            {
+                try { config = YamlConfigLoader.LoadFromFile(configPath); }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Config load failed: {ex.Message}");
+                    return ExitCodes.ConfigError;
+                }
+            }
+
+            var sourcePath = parse.GetValue(src) ?? config?.Source?.Path
+                ?? throw new InvalidOperationException("--source required (or configure in weft.yaml).");
+
+            return await RunAsync(sourcePath, parse.GetValue(tgt)!, parse.GetValue(artifacts)!);
+        });
         return cmd;
     }
 

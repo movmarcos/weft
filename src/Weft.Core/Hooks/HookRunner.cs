@@ -26,6 +26,26 @@ public sealed class HookRunner
         psi.Environment["WEFT_HOOK_PROFILE"] = context.ProfileName;
         psi.Environment["WEFT_HOOK_DATABASE"] = context.DatabaseName;
 
+        // Scrub known secret-bearing env vars from child environment.
+        var secretKeys = new[]
+        {
+            "WEFT_CLIENT_SECRET",
+            "WEFT_CERT_PASSWORD",
+            "WEFT_CERT_THUMBPRINT"
+        };
+        foreach (var key in secretKeys)
+            psi.Environment.Remove(key);
+        // Also scrub any WEFT_PARAM_* that looks secret-like (contains "PASSWORD", "SECRET", "KEY", "TOKEN").
+        var paramKeysToScrub = psi.Environment.Keys
+            .Where(k => k.StartsWith("WEFT_PARAM_", StringComparison.Ordinal) &&
+                        (k.Contains("PASSWORD", StringComparison.OrdinalIgnoreCase) ||
+                         k.Contains("SECRET",   StringComparison.OrdinalIgnoreCase) ||
+                         k.Contains("KEY",      StringComparison.OrdinalIgnoreCase) ||
+                         k.Contains("TOKEN",    StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+        foreach (var key in paramKeysToScrub)
+            psi.Environment.Remove(key);
+
         using var p = Process.Start(psi)!;
         var json = JsonSerializer.Serialize(context, new JsonSerializerOptions { WriteIndented = false });
         try

@@ -35,4 +35,26 @@ public class HookRunnerTests
         var result = await runner.RunAsync(new HookDefinition(HookPhase.PreDeploy, "false"), MakeContext());
         result.ExitCode.Should().NotBe(0);
     }
+
+    [Fact]
+    public async Task Scrubs_secret_env_vars_from_child_process()
+    {
+        if (OperatingSystem.IsWindows()) return;
+
+        Environment.SetEnvironmentVariable("WEFT_CLIENT_SECRET", "super-secret-value");
+        try
+        {
+            var runner = new HookRunner();
+            var ctx = new HookContext("t", "x", "D", HookPhase.PreDeploy,
+                new ChangeSetSnapshot(Array.Empty<string>(), Array.Empty<string>(),
+                    Array.Empty<string>(), Array.Empty<string>()));
+
+            // `/usr/bin/env` lists all env vars; if scrubbing works, WEFT_CLIENT_SECRET is absent.
+            var result = await runner.RunAsync(
+                new HookDefinition(HookPhase.PreDeploy, "/usr/bin/env"), ctx);
+            result.ExitCode.Should().Be(0);
+            result.Stdout.Should().NotContain("super-secret-value");
+        }
+        finally { Environment.SetEnvironmentVariable("WEFT_CLIENT_SECRET", null); }
+    }
 }
