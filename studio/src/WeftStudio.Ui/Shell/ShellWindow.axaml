@@ -8,47 +8,57 @@
         x:DataType="shell:ShellViewModel"
         Title="Weft Studio"
         Width="1200" Height="800">
-  <Grid ColumnDefinitions="48,250,*,300" RowDefinitions="*,24">
-    <shell:ActivityBar Grid.Column="0" Grid.Row="0"/>
-    <Border Grid.Column="1" Grid.Row="0" Background="#F4F4F4"
-            BorderBrush="#DDD" BorderThickness="0,0,1,0">
-      <ContentControl Content="{Binding Explorer}">
-        <ContentControl.DataTemplates>
-          <DataTemplate DataType="explorer:ExplorerViewModel">
-            <explorer:ExplorerView/>
+  <DockPanel>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="_File">
+        <MenuItem Header="_Open..." Click="OnFileOpen"/>
+        <MenuItem Header="_Save" Command="{Binding SaveCommand}"/>
+        <Separator/>
+        <MenuItem Header="E_xit" Click="OnExit"/>
+      </MenuItem>
+    </Menu>
+    <Grid ColumnDefinitions="48,250,*,300" RowDefinitions="*,24">
+      <shell:ActivityBar Grid.Column="0" Grid.Row="0"/>
+      <Border Grid.Column="1" Grid.Row="0" Background="#F4F4F4"
+              BorderBrush="#DDD" BorderThickness="0,0,1,0">
+        <ContentControl Content="{Binding Explorer}">
+          <ContentControl.DataTemplates>
+            <DataTemplate DataType="explorer:ExplorerViewModel">
+              <explorer:ExplorerView/>
+            </DataTemplate>
+          </ContentControl.DataTemplates>
+        </ContentControl>
+      </Border>
+      <TabControl Grid.Column="2" Grid.Row="0"
+                  ItemsSource="{Binding OpenTabs}"
+                  SelectedItem="{Binding ActiveTab}">
+        <TabControl.ItemTemplate>
+          <DataTemplate>
+            <TextBlock>
+              <Run Text="{Binding TableName}"/><Run Text="["/>
+              <Run Text="{Binding MeasureName}"/><Run Text="]"/>
+            </TextBlock>
           </DataTemplate>
-        </ContentControl.DataTemplates>
-      </ContentControl>
-    </Border>
-    <TabControl Grid.Column="2" Grid.Row="0"
-                ItemsSource="{Binding OpenTabs}"
-                SelectedItem="{Binding ActiveTab}">
-      <TabControl.ItemTemplate>
-        <DataTemplate>
-          <TextBlock>
-            <Run Text="{Binding TableName}"/><Run Text="["/>
-            <Run Text="{Binding MeasureName}"/><Run Text="]"/>
-          </TextBlock>
-        </DataTemplate>
-      </TabControl.ItemTemplate>
-      <TabControl.ContentTemplate>
-        <DataTemplate>
-          <dax:DaxEditorView/>
-        </DataTemplate>
-      </TabControl.ContentTemplate>
-    </TabControl>
-    <Border Grid.Column="3" Grid.Row="0" Background="#FAFAFA"
-            BorderBrush="#DDD" BorderThickness="1,0,0,0">
-      <ContentControl Content="{Binding Inspector}">
-        <ContentControl.DataTemplates>
-          <DataTemplate DataType="inspector:InspectorViewModel">
-            <inspector:InspectorView/>
+        </TabControl.ItemTemplate>
+        <TabControl.ContentTemplate>
+          <DataTemplate>
+            <dax:DaxEditorView/>
           </DataTemplate>
-        </ContentControl.DataTemplates>
-      </ContentControl>
-    </Border>
-    <Border Grid.ColumnSpan="4" Grid.Row="1" Background="#2A2D31">
-      <TextBlock Text="Ready" Foreground="#DDD" Margin="12,0" VerticalAlignment="Center"/>
-    </Border>
-  </Grid>
+        </TabControl.ContentTemplate>
+      </TabControl>
+      <Border Grid.Column="3" Grid.Row="0" Background="#FAFAFA"
+              BorderBrush="#DDD" BorderThickness="1,0,0,0">
+        <ContentControl Content="{Binding Inspector}">
+          <ContentControl.DataTemplates>
+            <DataTemplate DataType="inspector:InspectorViewModel">
+              <inspector:InspectorView/>
+            </DataTemplate>
+          </ContentControl.DataTemplates>
+        </ContentControl>
+      </Border>
+      <Border Grid.ColumnSpan="4" Grid.Row="1" Background="#2A2D31">
+        <TextBlock Text="Ready" Foreground="#DDD" Margin="12,0" VerticalAlignment="Center"/>
+      </Border>
+    </Grid>
+  </DockPanel>
 </Window>

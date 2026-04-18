@@ -2,9 +2,11 @@
 // Licensed under the MIT License.
 
 using System.Collections.ObjectModel;
+using System.Reactive;
 using System.Reactive.Linq;
 using ReactiveUI;
 using WeftStudio.App;
+using WeftStudio.App.Persistence;
 using WeftStudio.Ui.DaxEditor;
 using WeftStudio.Ui.Explorer;
 using WeftStudio.Ui.Inspector;
@@ -27,6 +29,15 @@ public sealed class ShellViewModel : ReactiveObject
             if (tab is null || Explorer is null) Inspector = null;
             else Inspector = new InspectorViewModel(Explorer.Session, tab.TableName, tab.MeasureName);
         });
+
+        var canSave = this.WhenAnyValue(x => x.Explorer).Select(exp => exp is not null);
+
+        SaveCommand = ReactiveCommand.Create(() =>
+        {
+            if (Explorer is not null) BimSaver.Save(Explorer.Session);
+        }, canSave);
+
+        OpenModelCommand = ReactiveCommand.Create<string>(OpenModel);
     }
 
     public ActivityMode ActiveMode
@@ -54,6 +65,9 @@ public sealed class ShellViewModel : ReactiveObject
         get => _inspector;
         set => this.RaiseAndSetIfChanged(ref _inspector, value);
     }
+
+    public ReactiveCommand<Unit, Unit>   SaveCommand      { get; }
+    public ReactiveCommand<string, Unit> OpenModelCommand { get; }
 
     public void OpenModel(string bimPath)
     {

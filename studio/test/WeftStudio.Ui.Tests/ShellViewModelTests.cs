@@ -1,6 +1,7 @@
 // Copyright (c) Marcos Magri / Weft contributors. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Reactive.Linq;
 using FluentAssertions;
 using WeftStudio.App;
 using WeftStudio.Ui.DaxEditor;
@@ -57,5 +58,27 @@ public class ShellViewModelTests
         vm.OpenMeasure("FactSales", measure.Name);
 
         vm.OpenTabs.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task SaveCommand_persists_changes_and_clears_dirty()
+    {
+        var tmp = Path.GetTempFileName() + ".bim";
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "fixtures", "simple.bim"),
+                  tmp, overwrite: true);
+        try
+        {
+            var vm = new ShellViewModel();
+            vm.OpenModel(tmp);
+            var m = vm.Explorer!.Session.Database.Model.Tables["FactSales"].Measures[0];
+            vm.Explorer.Session.ChangeTracker.Execute(
+                vm.Explorer.Session.Database,
+                new WeftStudio.App.Commands.RenameMeasureCommand("FactSales", m.Name, "Renamed"));
+
+            vm.Explorer.Session.IsDirty.Should().BeTrue();
+            await vm.SaveCommand.Execute();
+            vm.Explorer.Session.IsDirty.Should().BeFalse();
+        }
+        finally { File.Delete(tmp); }
     }
 }
