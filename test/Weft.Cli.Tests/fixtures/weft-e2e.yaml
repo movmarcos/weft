@@ -1,0 +1,19 @@
+version: 1
+
+source:
+  format: bim
+  path: tiny-static.bim
+
+defaults:
+  allowDrops: true
+  allowHistoryLoss: false
+
+profiles:
+  test:
+    workspace: "powerbi://x"
+    database: TinyStatic
+    auth:
+      mode: Interactive
+      tenantId: tenant
+      clientId: client
+    parameters: {}

@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Weft configuration",
+  "type": "object",
+  "required": ["version", "profiles"],
+  "properties": {
+    "version": { "type": "integer", "enum": [1] },
+    "source": {
+      "type": "object",
+      "required": ["format", "path"],
+      "properties": {
+        "format": { "type": "string", "enum": ["bim", "folder"] },
+        "path":   { "type": "string" }
+      }
+    },
+    "defaults": { "$ref": "#/$defs/defaults" },
+    "profiles": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/profile" }
+    },
+    "parameters": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/parameterDeclaration" }
+    },
+    "overrides": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "dataSources": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "server":   { "type": "string" },
+                "database": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "hooks": { "$ref": "#/$defs/hooks" }
+  },
+  "$defs": {
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "refresh": { "$ref": "#/$defs/refresh" },
+        "allowDrops": { "type": "boolean" },
+        "allowHistoryLoss": { "type": "boolean" },
+        "timeoutMinutes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "required": ["workspace", "database", "auth"],
+      "properties": {
+        "workspace": { "type": "string" },
+        "database":  { "type": "string" },
+        "auth":      { "$ref": "#/$defs/auth" },
+        "refresh":   { "$ref": "#/$defs/refresh" },
+        "allowDrops": { "type": "boolean" },
+        "allowHistoryLoss": { "type": "boolean" },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "required": ["mode", "tenantId", "clientId"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "ServicePrincipalSecret",
+            "ServicePrincipalCertFile",
+            "ServicePrincipalCertStore",
+            "Interactive",
+            "DeviceCode"
+          ]
+        },
+        "tenantId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "clientSecret":     { "type": "string" },
+        "certPath":         { "type": "string" },
+        "certPassword":     { "type": "string" },
+        "certThumbprint":   { "type": "string" },
+        "certStoreLocation":{ "type": "string", "enum": ["LocalMachine", "CurrentUser"] },
+        "certStoreName":    { "type": "string" },
+        "redirectUri":      { "type": "string" }
+      }
+    },
+    "refresh": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["full", "dataOnly", "calculate", "automatic"] },
+        "maxParallelism": { "type": "integer", "minimum": 1 },
+        "pollIntervalSeconds": { "type": "integer", "minimum": 1 },
+        "incrementalPolicy": {
+          "type": "object",
+          "properties": {
+            "applyOnFirstDeploy":  { "type": "boolean" },
+            "applyOnPolicyChange": { "type": "boolean" },
+            "bookmarkMode": {
+              "type": "string",
+              "enum": ["preserve", "clearAll", "clearForPolicyChange"]
+            }
+          }
+        },
+        "dynamicPartitionStrategy": {
+          "type": "object",
+          "properties": {
+            "mode":    { "type": "string", "enum": ["newestOnly", "allTouched", "none"] },
+            "newestN": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "parameterDeclaration": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name":        { "type": "string" },
+        "description": { "type": "string" },
+        "type":        { "type": "string", "enum": ["string", "bool", "int"] },
+        "required":    { "type": "boolean" },
+        "default":     {}
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "properties": {
+        "prePlan":     { "type": "string" },
+        "preDeploy":   { "type": "string" },
+        "postDeploy":  { "type": "string" },
+        "preRefresh":  { "type": "string" },
+        "postRefresh": { "type": "string" },
+        "onFailure":   { "type": "string" }
+      }
+    }
+  }
+}

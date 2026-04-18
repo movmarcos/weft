@@ -1,0 +1,24 @@
+version: 1
+
+source:
+  format: bim
+  path: ./model.bim
+
+defaults:
+  allowDrops: false
+  allowHistoryLoss: false
+
+profiles:
+  prod:
+    workspace: "${WEFT_PROD_WORKSPACE}"
+    database: "${WEFT_PROD_DATABASE}"
+    auth:
+      mode: ServicePrincipalCertStore
+      tenantId: "${WEFT_TENANT_ID}"
+      clientId: "${WEFT_SP_CLIENT_ID}"
+      certThumbprint: "${WEFT_CERT_THUMBPRINT}"
+
+hooks:
+  preDeploy: ./hooks/notify.sh
+  postDeploy: ./hooks/notify.sh
+  onFailure: ./hooks/notify.sh

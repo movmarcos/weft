@@ -144,7 +144,7 @@ dotnet new sln -n weft
 - [ ] **Step 6: Verify and commit**
 
 ```bash
-dotnet --version    # confirm 8.0.x
+dotnet --version    # confirm 10.0.x
 ls weft.sln Directory.Build.props global.json .gitignore LICENSE
 git add global.json Directory.Build.props .editorconfig .gitignore LICENSE weft.sln
 git commit -m "chore: repo scaffolding (sdk pin, build props, license, solution)"
@@ -174,6 +174,14 @@ Edit `src/Weft.Core/Weft.Core.csproj` to add the package reference:
   <PackageReference Include="Microsoft.AnalysisServices.NetCore.retail.amd64" Version="19.84.1" />
 </ItemGroup>
 ```
+
+- [ ] **Step 2.5: Pin MSAL for security**
+
+TOM 19.84.1 transitively brings MSAL 4.56.0 which has known CVEs (GHSA-m5vv-6r4h-3vj9, GHSA-x674-v45j-fwxw). With TreatWarningsAsErrors, NU1901/NU1902 break the build. Pin a patched MSAL directly:
+```xml
+<PackageReference Include="Microsoft.Identity.Client" Version="4.83.3" />
+```
+Re-evaluate when TOM bumps its own MSAL floor past 4.83.x.
 
 - [ ] **Step 3: Add to solution**
 
@@ -2591,7 +2599,7 @@ Walk the spec sections this plan claims to implement and confirm each has a task
 | §7A.7 bookmark preservation in alter | Tasks 20, 21 |
 | §7A.8 retention math (history-loss detection) | Task 17 (Year only; Quarter/Month follow-up) |
 | §7A.9 restore partition-set computation | Task 18 |
-| §10 unit-test priorities 1, 2, 3, 6, 7, 8 | Tasks 5–22 |
+| §10 unit-test priorities 1, 2, 3, 6, 7, 8, 9 | Tasks 5–22 + follow-up RefreshTargets test |
 
 Items NOT in this plan and tracked elsewhere:
 - Refresh-scope derivation per-table refresh-type matrix (§6 step 13) — needs the refresh runner; Plan 2.

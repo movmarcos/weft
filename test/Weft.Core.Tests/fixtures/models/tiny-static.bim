@@ -1,0 +1,46 @@
+{
+  "name": "TinyStatic",
+  "compatibilityLevel": 1600,
+  "model": {
+    "culture": "en-US",
+    "tables": [
+      {
+        "name": "DimDate",
+        "columns": [
+          { "name": "Date", "dataType": "dateTime", "sourceColumn": "Date" }
+        ],
+        "partitions": [
+          {
+            "name": "DimDate",
+            "mode": "import",
+            "source": { "type": "m", "expression": "let Source = #table({\"Date\"}, {{#date(2025,1,1)}}) in Source" }
+          }
+        ]
+      },
+      {
+        "name": "FactSales",
+        "columns": [
+          { "name": "Date", "dataType": "dateTime", "sourceColumn": "Date" },
+          { "name": "Amount", "dataType": "double", "sourceColumn": "Amount" }
+        ],
+        "partitions": [
+          {
+            "name": "FactSales",
+            "mode": "import",
+            "source": { "type": "m", "expression": "let Source = #table({\"Date\",\"Amount\"}, {}) in Source" }
+          }
+        ],
+        "measures": [
+          { "name": "Total Sales", "expression": "SUM(FactSales[Amount])" }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "rel_factsales_dimdate",
+        "fromTable": "FactSales", "fromColumn": "Date",
+        "toTable":   "DimDate",   "toColumn":   "Date"
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+version: 1
+
+source:
+  format: bim
+  path: ./model.bim
+
+defaults:
+  refresh:
+    type: full
+    maxParallelism: 10
+    pollIntervalSeconds: 15
+  allowDrops: false
+  allowHistoryLoss: false
+  timeoutMinutes: 60
+
+profiles:
+  dev:
+    workspace: "${WEFT_DEV_WORKSPACE}"
+    database: "${WEFT_DEV_DATABASE}"
+    auth:
+      mode: Interactive
+      tenantId: "${WEFT_TENANT_ID}"
+      clientId: "${WEFT_CLIENT_ID}"
+
+  prod:
+    workspace: "${WEFT_PROD_WORKSPACE}"
+    database: "${WEFT_PROD_DATABASE}"
+    auth:
+      mode: ServicePrincipalCertStore
+      tenantId: "${WEFT_TENANT_ID}"
+      clientId: "${WEFT_SP_CLIENT_ID}"
+      certThumbprint: "${WEFT_CERT_THUMBPRINT}"
+      certStoreLocation: LocalMachine
+      certStoreName: My

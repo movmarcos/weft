@@ -1,0 +1,18 @@
+version: 1
+
+source:
+  format: folder
+  path: ./Model
+
+defaults:
+  allowDrops: false
+  allowHistoryLoss: false
+
+profiles:
+  dev:
+    workspace: "${WEFT_DEV_WORKSPACE}"
+    database: "${WEFT_DEV_DATABASE}"
+    auth:
+      mode: Interactive
+      tenantId: "${WEFT_TENANT_ID}"
+      clientId: "${WEFT_CLIENT_ID}"

@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.83.3" />
+    <ProjectReference Include="..\Weft.Core\Weft.Core.csproj" />
+  </ItemGroup>
+</Project>

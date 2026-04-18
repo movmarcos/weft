@@ -1,0 +1,67 @@
+version: 1
+
+source:
+  format: bim
+  path: ./model.bim
+
+defaults:
+  refresh:
+    type: full
+    maxParallelism: 10
+    pollIntervalSeconds: 15
+    incrementalPolicy:
+      applyOnFirstDeploy: true
+      applyOnPolicyChange: true
+      bookmarkMode: preserve
+    dynamicPartitionStrategy:
+      mode: newestOnly
+      newestN: 1
+  allowDrops: false
+  allowHistoryLoss: false
+  timeoutMinutes: 60
+
+profiles:
+  dev:
+    workspace: "powerbi://api.powerbi.com/v1.0/myorg/Weft-Dev"
+    database: SalesModel
+    auth:
+      mode: Interactive
+      tenantId: "${WEFT_TENANT_ID}"
+      clientId: "${WEFT_CLIENT_ID}"
+    parameters:
+      DatabaseName: EDW_DEV
+      ServerName: dev-sql.corp.local
+      EnableDebugMeasures: true
+
+  prod:
+    workspace: "powerbi://api.powerbi.com/v1.0/myorg/Weft-Prod"
+    database: SalesModel
+    auth:
+      mode: ServicePrincipalCertStore
+      tenantId: "${WEFT_TENANT_ID}"
+      clientId: "${WEFT_SP_CLIENT_ID}"
+      certThumbprint: "${WEFT_CERT_THUMBPRINT}"
+      certStoreLocation: LocalMachine
+      certStoreName: My
+    allowDrops: false
+    allowHistoryLoss: false
+    parameters:
+      DatabaseName: EDW_PROD
+      ServerName: prod-sql.corp.local
+
+parameters:
+  - name: DatabaseName
+    description: Warehouse database name
+    type: string
+    required: true
+  - name: ServerName
+    type: string
+    required: true
+  - name: EnableDebugMeasures
+    type: bool
+    required: false
+
+hooks:
+  preDeploy: ./hooks/notify-teams.ps1
+  postDeploy: ./hooks/tag-git-release.sh
+  onFailure: ./hooks/open-incident.ps1

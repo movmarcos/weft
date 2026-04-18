@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AnalysisServices.NetCore.retail.amd64" Version="19.84.1" />
+    <!--
+      Pin MSAL to patch transitive dep from Microsoft.AnalysisServices.NetCore.retail.amd64 19.84.1,
+      which drags MSAL 4.56.0 (vulnerable: GHSA-m5vv-6r4h-3vj9, GHSA-x674-v45j-fwxw).
+      Re-evaluate when TOM publishes a release that bumps its own MSAL floor past 4.83.x.
+    -->
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.83.3" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>Weft.Core</PackageId>
+    <Authors>Marcos Magri / Weft contributors</Authors>
+    <Description>Pure-logic core of Weft — diff-based Power BI semantic-model deployment. Load .bim / TE folder models, compute a surgical ChangeSet that preserves target partitions + bookmarks, emit TMSL.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/marcosmagri/weft</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/marcosmagri/weft</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>powerbi;tabular;tmsl;deployment;semantic-model</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

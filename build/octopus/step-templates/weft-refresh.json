@@ -1,0 +1,56 @@
+{
+  "Id": "weft-refresh-step-template",
+  "Name": "Weft — Refresh Power BI Model",
+  "Description": "Runs `weft refresh` on a comma-separated list of tables.",
+  "ActionType": "Octopus.Script",
+  "Version": 1,
+  "Properties": {
+    "Octopus.Action.Script.Syntax": "Bash",
+    "Octopus.Action.Script.ScriptBody": "#!/usr/bin/env bash\nset -euo pipefail\n\nexport WEFT_TENANT_ID=\"#{WeftTenantId}\"\nexport WEFT_SP_CLIENT_ID=\"#{WeftSpClientId}\"\nexport WEFT_CERT_THUMBPRINT=\"#{WeftCertThumbprint}\"\n\nweft refresh \\\n  --config \"#{WeftConfigFile}\" \\\n  --target \"#{WeftTargetProfile}\" \\\n  --tables \"#{WeftTables}\" \\\n  --log-format json\n"
+  },
+  "Parameters": [
+    {
+      "Id": "weft-tenant-id",
+      "Name": "WeftTenantId",
+      "Label": "Tenant ID",
+      "DefaultValue": "",
+      "DisplaySettings": { "Octopus.ControlType": "SingleLineText" }
+    },
+    {
+      "Id": "weft-sp-client-id",
+      "Name": "WeftSpClientId",
+      "Label": "Service Principal Client ID",
+      "DefaultValue": "",
+      "DisplaySettings": { "Octopus.ControlType": "SingleLineText" }
+    },
+    {
+      "Id": "weft-cert-thumbprint",
+      "Name": "WeftCertThumbprint",
+      "Label": "Certificate Thumbprint",
+      "DefaultValue": "",
+      "DisplaySettings": { "Octopus.ControlType": "Sensitive" }
+    },
+    {
+      "Id": "weft-config-file",
+      "Name": "WeftConfigFile",
+      "Label": "Config File",
+      "DefaultValue": "weft.yaml",
+      "DisplaySettings": { "Octopus.ControlType": "SingleLineText" }
+    },
+    {
+      "Id": "weft-target-profile",
+      "Name": "WeftTargetProfile",
+      "Label": "Target Profile",
+      "DefaultValue": "#{Octopus.Environment.Name}",
+      "DisplaySettings": { "Octopus.ControlType": "SingleLineText" }
+    },
+    {
+      "Id": "weft-tables",
+      "Name": "WeftTables",
+      "Label": "Tables",
+      "HelpText": "Comma-separated list of table names to refresh.",
+      "DefaultValue": "",
+      "DisplaySettings": { "Octopus.ControlType": "SingleLineText" }
+    }
+  ]
+}
