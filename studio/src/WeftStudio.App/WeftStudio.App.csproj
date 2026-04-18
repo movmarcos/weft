@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Weft.Core\Weft.Core.csproj" />
+    <ProjectReference Include="..\..\..\src\Weft.Auth\Weft.Auth.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="WeftStudio.App.Tests" />
