@@ -234,11 +234,21 @@ function renderLoomTiles(tilesData, slugToHref) {
   }).join('\n      ');
 }
 
+// --- search helpers ------------------------------------------------------
+
+// Strip all HTML tags and return plain text (for excerpts).
+function stripTags(html) {
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 // --- main ----------------------------------------------------------------
 
 async function build() {
   await ensureDir(DIST);
   await ensureDir(DOCS_DIST);
+
+  /** @type {Array<{url:string, title:string, eyebrow:string, headings:string[], excerpt:string}>} */
+  const searchEntries = [];
 
   const nav   = JSON.parse(await readFile(join(DATA, 'nav.json'), 'utf8'));
   const tiles = JSON.parse(await readFile(join(DATA, 'tiles.json'), 'utf8'));
@@ -333,6 +343,15 @@ async function build() {
     await writeFile(out, rendered, 'utf8');
     writtenCount++;
     console.log(`wrote ${relative(ROOT, out)}`);
+
+    // Collect search entry for this doc page.
+    searchEntries.push({
+      url: `/docs/${slug}/`,
+      title: frontmatter.title || slug,
+      eyebrow: frontmatter.eyebrow || '',
+      headings: currentH2s.map(h => h.text),
+      excerpt: stripTags(html).slice(0, 200),
+    });
   }
 
   // --- homepage -------------------------------------------------------
@@ -407,6 +426,15 @@ ${opts}
     await writeFile(join(outDir, 'index.html'), rendered, 'utf8');
     writtenCount++;
     console.log(`wrote ${relative(ROOT, join(outDir, 'index.html'))}`);
+
+    // Search entry for CLI reference.
+    searchEntries.push({
+      url: '/cli/',
+      title: 'CLI reference',
+      eyebrow: 'CLI · Reference',
+      headings: cli.commands.map(c => `weft ${c.name}`),
+      excerpt: 'Six commands. All share a common auth surface. All exit with one of eleven codes.',
+    });
   }
 
   // --- Exit codes -----------------------------------------------------
@@ -442,6 +470,15 @@ ${opts}
     await writeFile(join(outDir, 'index.html'), rendered, 'utf8');
     writtenCount++;
     console.log(`wrote ${relative(ROOT, join(outDir, 'index.html'))}`);
+
+    // Search entry for exit codes.
+    searchEntries.push({
+      url: '/exit-codes/',
+      title: 'Exit codes',
+      eyebrow: 'Exit codes · Reference',
+      headings: ecs.codes.map(c => `${c.code} — ${c.name}`),
+      excerpt: 'Every weft command exits with one of these codes. A non-zero code is a structured signal for CI systems.',
+    });
   }
 
   // --- Samples landing + sample pages ---------------------------------
@@ -488,6 +525,15 @@ ${opts}
     await writeFile(join(outDir, 'index.html'), rendered, 'utf8');
     writtenCount++;
     console.log(`wrote ${relative(ROOT, join(outDir, 'index.html'))}`);
+
+    // Search entry for samples landing.
+    searchEntries.push({
+      url: '/samples/',
+      title: 'Sample projects',
+      eyebrow: 'Samples · End-to-end',
+      headings: sampleDirs.map(s => s.title),
+      excerpt: 'Four runnable projects that exercise Weft from the simplest .bim up to a full pipeline with cert auth and hooks.',
+    });
   }
 
   // Per-sample pages
@@ -542,7 +588,24 @@ ${opts}
     await writeFile(join(outDir, 'index.html'), rendered, 'utf8');
     writtenCount++;
     console.log(`wrote ${relative(ROOT, join(outDir, 'index.html'))}`);
+
+    // Search entry for this sample.
+    searchEntries.push({
+      url: `/samples/${s.slug}/`,
+      title: s.title,
+      eyebrow: `Sample · ${s.slug}`,
+      headings: currentH2s.map(h => h.text),
+      excerpt: stripTags(html).slice(0, 200),
+    });
   }
+
+  // --- search index ---------------------------------------------------
+  await writeFile(
+    join(DIST, 'search-index.json'),
+    JSON.stringify(searchEntries, null, 2),
+    'utf8',
+  );
+  console.log(`wrote search-index.json (${searchEntries.length} entries)`);
 
   // --- assets ---------------------------------------------------------
   if (existsSync(ASSETS_SRC)) {

@@ -70,6 +70,8 @@ See [docs/authentication.md](docs/authentication.md).
 - [Hooks](docs/hooks.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
+The same docs are available as a browseable site at <https://marcosmagri.github.io/weft/> (after first push to GitHub Pages).
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
