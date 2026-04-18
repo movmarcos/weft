@@ -41,9 +41,9 @@ public class AuthOptionsValidationTests
     }
 
     [Fact]
-    public void Tenant_and_client_must_be_non_empty()
+    public void ServicePrincipal_requires_non_empty_TenantId()
     {
-        var opts = new AuthOptions(AuthMode.Interactive, "", "cid");
+        var opts = new AuthOptions(AuthMode.ServicePrincipalSecret, "", "cid");
         var act = () => AuthOptionsValidator.Validate(opts);
         act.Should().Throw<AuthOptionsValidationException>().WithMessage("*TenantId*");
     }

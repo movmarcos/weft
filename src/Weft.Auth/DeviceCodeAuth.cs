@@ -19,10 +19,19 @@ public sealed class DeviceCodeAuth : IAuthProvider
         if (options.Mode != AuthMode.DeviceCode)
             throw new ArgumentException("AuthMode must be DeviceCode.", nameof(options));
 
-        _app = PublicClientApplicationBuilder
-            .Create(options.ClientId)
-            .WithTenantId(options.TenantId)
-            .Build();
+        var builder = PublicClientApplicationBuilder.Create(options.ClientId);
+
+        if (string.IsNullOrWhiteSpace(options.TenantId)
+            || string.Equals(options.TenantId, "common", StringComparison.OrdinalIgnoreCase))
+        {
+            builder = builder.WithAuthority("https://login.microsoftonline.com/common");
+        }
+        else
+        {
+            builder = builder.WithTenantId(options.TenantId);
+        }
+
+        _app = builder.Build();
         _instructionsOut = instructionsOut ?? Console.Out;
     }
 

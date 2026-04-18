@@ -18,9 +18,19 @@ public sealed class InteractiveAuth : IAuthProvider
         if (options.Mode != AuthMode.Interactive)
             throw new ArgumentException("AuthMode must be Interactive.", nameof(options));
 
-        _app = PublicClientApplicationBuilder
-            .Create(options.ClientId)
-            .WithTenantId(options.TenantId)
+        var builder = PublicClientApplicationBuilder.Create(options.ClientId);
+
+        if (string.IsNullOrWhiteSpace(options.TenantId)
+            || string.Equals(options.TenantId, "common", StringComparison.OrdinalIgnoreCase))
+        {
+            builder = builder.WithAuthority("https://login.microsoftonline.com/common");
+        }
+        else
+        {
+            builder = builder.WithTenantId(options.TenantId);
+        }
+
+        _app = builder
             .WithRedirectUri(options.RedirectUri ?? "http://localhost")
             .Build();
     }

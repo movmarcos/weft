@@ -7,8 +7,17 @@ public static class AuthOptionsValidator
 {
     public static void Validate(AuthOptions options)
     {
-        if (string.IsNullOrWhiteSpace(options.TenantId))
-            throw new AuthOptionsValidationException("TenantId is required.");
+        var tenantRequired =
+            options.Mode is AuthMode.ServicePrincipalSecret
+                        or AuthMode.ServicePrincipalCertStore
+                        or AuthMode.ServicePrincipalCertFile;
+
+        if (tenantRequired && string.IsNullOrWhiteSpace(options.TenantId))
+            throw new AuthOptionsValidationException(
+                "TenantId is required for service principal auth modes.");
+
+        // Interactive/DeviceCode: empty TenantId → will use /common authority (handled in auth providers).
+
         if (string.IsNullOrWhiteSpace(options.ClientId))
             throw new AuthOptionsValidationException("ClientId is required.");
 
