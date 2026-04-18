@@ -58,9 +58,12 @@ public sealed class HookRunner
             // Process may have exited before reading stdin — not an error.
         }
 
-        var stdout = await p.StandardOutput.ReadToEndAsync(ct);
-        var stderr = await p.StandardError.ReadToEndAsync(ct);
+        var stdoutTask = p.StandardOutput.ReadToEndAsync(ct);
+        var stderrTask = p.StandardError.ReadToEndAsync(ct);
+        await Task.WhenAll(stdoutTask, stderrTask);
         await p.WaitForExitAsync(ct);
+        var stdout = await stdoutTask;
+        var stderr = await stderrTask;
 
         return new HookRunResult(p.ExitCode, stdout, stderr);
     }

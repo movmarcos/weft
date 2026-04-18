@@ -57,4 +57,29 @@ public class HookRunnerTests
         }
         finally { Environment.SetEnvironmentVariable("WEFT_CLIENT_SECRET", null); }
     }
+
+    [Fact]
+    public async Task Captures_large_stderr_without_deadlock()
+    {
+        if (OperatingSystem.IsWindows()) return;
+
+        var script = Path.GetTempFileName();
+        File.WriteAllText(script, "#!/bin/sh\nhead -c 200000 /dev/urandom >&2\necho ok\n");
+        File.SetUnixFileMode(script,
+            UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+
+        try
+        {
+            var runner = new HookRunner();
+            var ctx = new HookContext("t", "x", "D", HookPhase.PreDeploy,
+                new ChangeSetSnapshot(Array.Empty<string>(), Array.Empty<string>(),
+                    Array.Empty<string>(), Array.Empty<string>()));
+
+            var result = await runner.RunAsync(new HookDefinition(HookPhase.PreDeploy, script), ctx);
+            result.ExitCode.Should().Be(0);
+            result.Stdout.Should().StartWith("ok");
+            result.Stderr.Length.Should().BeGreaterThan(100_000);
+        }
+        finally { File.Delete(script); }
+    }
 }
