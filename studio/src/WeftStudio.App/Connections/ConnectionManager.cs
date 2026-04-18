@@ -30,5 +30,15 @@ public sealed class ConnectionManager
         return await provider.GetTokenAsync(ct);
     }
 
-    // Task 8 adds ListDatasetsAsync, Task 9 adds FetchModelAsync.
+    public async Task<IReadOnlyList<DatasetInfo>> ListDatasetsAsync(
+        WorkspaceReference workspace, AccessToken token, CancellationToken ct)
+    {
+        var names = await _reader.ListDatabasesAsync(workspace.Server, token, ct);
+        return names
+            .Select(n => new DatasetInfo(n, SizeBytes: null, LastUpdatedUtc: null,
+                                         RefreshPolicy: null, Owner: null))
+            .ToList();
+    }
+
+    // Task 9 adds FetchModelAsync.
 }

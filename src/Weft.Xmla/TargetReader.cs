@@ -28,4 +28,25 @@ public sealed class TargetReader : ITargetReader
         var detached = JsonSerializer.DeserializeDatabase(serialized);
         return Task.FromResult(detached);
     }
+
+    public Task<IReadOnlyList<string>> ListDatabasesAsync(
+        string serverUrl,
+        AccessToken token,
+        CancellationToken ct)
+    {
+        using var server = new Server();
+        server.AccessToken = new Microsoft.AnalysisServices.AccessToken(
+            token.Value,
+            token.ExpiresOnUtc.UtcDateTime);
+        server.Connect($"Provider=MSOLAP;Data Source={serverUrl};");
+
+        var names = new List<string>();
+        foreach (Database db in server.Databases)
+        {
+            ct.ThrowIfCancellationRequested();
+            names.Add(db.Name);
+        }
+
+        return Task.FromResult<IReadOnlyList<string>>(names);
+    }
 }

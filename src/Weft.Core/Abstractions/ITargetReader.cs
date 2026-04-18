@@ -12,4 +12,9 @@ public interface ITargetReader
         string databaseName,
         AccessToken token,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<string>> ListDatabasesAsync(
+        string serverUrl,
+        AccessToken token,
+        CancellationToken ct);
 }

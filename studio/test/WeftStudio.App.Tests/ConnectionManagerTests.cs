@@ -32,4 +32,23 @@ public class ConnectionManagerTests
 
         token.Value.Should().Be("jwt-token-value");
     }
+
+    [Fact]
+    public async Task ListDatasetsAsync_returns_DatasetInfo_rows_from_reader()
+    {
+        var reader = Substitute.For<ITargetReader>();
+        reader.ListDatabasesAsync(
+                Arg.Any<string>(),
+                Arg.Any<AccessToken>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new[] { "DatasetA", "DatasetB" });
+
+        var mgr = new ConnectionManager(_ => Substitute.For<IAuthProvider>(), reader);
+        var ws = WorkspaceReference.Parse("powerbi://api.powerbi.com/v1.0/myorg/Test");
+        var token = new AccessToken("jwt", DateTimeOffset.UtcNow.AddHours(1));
+
+        var datasets = await mgr.ListDatasetsAsync(ws, token, CancellationToken.None);
+
+        datasets.Select(d => d.Name).Should().Equal("DatasetA", "DatasetB");
+    }
 }
