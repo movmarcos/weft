@@ -1,0 +1,76 @@
+name: Release Artifacts
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  publish-binaries:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: windows-latest
+            rid: win-x64
+          - os: macos-latest
+            rid: osx-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish weft
+        run: |
+          dotnet publish src/Weft.Cli/Weft.Cli.csproj \
+            --configuration Release \
+            --runtime ${{ matrix.rid }} \
+            --self-contained false \
+            --output publish/${{ matrix.rid }} \
+            /p:Version=${{ github.event.release.tag_name }}
+
+      - name: Zip
+        shell: bash
+        run: |
+          cd publish
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            7z a weft-${{ github.event.release.tag_name }}-${{ matrix.rid }}.zip ${{ matrix.rid }}/*
+          else
+            zip -r weft-${{ github.event.release.tag_name }}-${{ matrix.rid }}.zip ${{ matrix.rid }}/
+          fi
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: publish/weft-${{ github.event.release.tag_name }}-${{ matrix.rid }}.zip
+
+  publish-nuget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Pack Weft.Core
+        run: |
+          dotnet pack src/Weft.Core/Weft.Core.csproj \
+            --configuration Release \
+            --output nupkgs \
+            /p:Version=${{ github.event.release.tag_name }}
+      - name: Push to nuget.org
+        if: ${{ secrets.NUGET_API_KEY != '' }}
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push nupkgs/*.nupkg \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
