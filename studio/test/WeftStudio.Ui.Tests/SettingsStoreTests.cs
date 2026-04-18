@@ -2,8 +2,8 @@
 // Licensed under the MIT License.
 
 using FluentAssertions;
-using WeftStudio.Ui.Settings;
-using AppSettings = WeftStudio.Ui.Settings.Settings;
+using WeftStudio.App.Settings;
+using AppSettings = WeftStudio.App.Settings.Settings;
 
 namespace WeftStudio.Ui.Tests;
 

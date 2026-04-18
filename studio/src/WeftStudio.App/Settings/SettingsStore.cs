@@ -3,7 +3,7 @@
 
 using System.Text.Json;
 
-namespace WeftStudio.Ui.Settings;
+namespace WeftStudio.App.Settings;
 
 public sealed class SettingsStore
 {

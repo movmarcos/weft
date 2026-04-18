@@ -11,7 +11,7 @@ using WeftStudio.App.Persistence;
 using WeftStudio.Ui.DaxEditor;
 using WeftStudio.Ui.Explorer;
 using WeftStudio.Ui.Inspector;
-using WeftStudio.Ui.Settings;
+using WeftStudio.App.Settings;
 
 namespace WeftStudio.Ui.Shell;
 
