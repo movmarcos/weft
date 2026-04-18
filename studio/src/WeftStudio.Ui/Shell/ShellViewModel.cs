@@ -2,10 +2,12 @@
 // Licensed under the MIT License.
 
 using System.Collections.ObjectModel;
+using System.Reactive.Linq;
 using ReactiveUI;
 using WeftStudio.App;
 using WeftStudio.Ui.DaxEditor;
 using WeftStudio.Ui.Explorer;
+using WeftStudio.Ui.Inspector;
 
 namespace WeftStudio.Ui.Shell;
 
@@ -16,6 +18,16 @@ public sealed class ShellViewModel : ReactiveObject
     private ActivityMode _activeMode = ActivityMode.Explorer;
     private ExplorerViewModel? _explorer;
     private DaxEditorViewModel? _activeTab;
+    private InspectorViewModel? _inspector;
+
+    public ShellViewModel()
+    {
+        this.WhenAnyValue(x => x.ActiveTab).Subscribe(tab =>
+        {
+            if (tab is null || Explorer is null) Inspector = null;
+            else Inspector = new InspectorViewModel(Explorer.Session, tab.TableName, tab.MeasureName);
+        });
+    }
 
     public ActivityMode ActiveMode
     {
@@ -35,6 +47,12 @@ public sealed class ShellViewModel : ReactiveObject
     {
         get => _activeTab;
         set => this.RaiseAndSetIfChanged(ref _activeTab, value);
+    }
+
+    public InspectorViewModel? Inspector
+    {
+        get => _inspector;
+        set => this.RaiseAndSetIfChanged(ref _inspector, value);
     }
 
     public void OpenModel(string bimPath)

@@ -1,0 +1,11 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:inspector="using:WeftStudio.Ui.Inspector"
+             x:Class="WeftStudio.Ui.Inspector.InspectorView"
+             x:DataType="inspector:InspectorViewModel">
+  <StackPanel Margin="12" Spacing="8">
+    <TextBlock Text="MEASURE" Foreground="#888" FontSize="10"/>
+    <TextBlock Text="Name"/>
+    <TextBox Text="{Binding Name}" LostFocus="OnNameLostFocus"/>
+  </StackPanel>
+</UserControl>

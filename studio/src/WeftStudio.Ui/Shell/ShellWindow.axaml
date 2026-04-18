@@ -3,6 +3,7 @@
         xmlns:shell="using:WeftStudio.Ui.Shell"
         xmlns:explorer="using:WeftStudio.Ui.Explorer"
         xmlns:dax="using:WeftStudio.Ui.DaxEditor"
+        xmlns:inspector="using:WeftStudio.Ui.Inspector"
         x:Class="WeftStudio.Ui.Shell.ShellWindow"
         x:DataType="shell:ShellViewModel"
         Title="Weft Studio"
@@ -38,7 +39,13 @@
     </TabControl>
     <Border Grid.Column="3" Grid.Row="0" Background="#FAFAFA"
             BorderBrush="#DDD" BorderThickness="1,0,0,0">
-      <TextBlock Text="Inspector" Margin="12"/>
+      <ContentControl Content="{Binding Inspector}">
+        <ContentControl.DataTemplates>
+          <DataTemplate DataType="inspector:InspectorViewModel">
+            <inspector:InspectorView/>
+          </DataTemplate>
+        </ContentControl.DataTemplates>
+      </ContentControl>
     </Border>
     <Border Grid.ColumnSpan="4" Grid.Row="1" Background="#2A2D31">
       <TextBlock Text="Ready" Foreground="#DDD" Margin="12,0" VerticalAlignment="Center"/>
