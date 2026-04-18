@@ -18,4 +18,9 @@
     <ProjectReference Include="..\..\src\Weft.Config\Weft.Config.csproj" />
     <ProjectReference Include="..\..\test\Weft.Core.Tests\Weft.Core.Tests.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="fixtures\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
