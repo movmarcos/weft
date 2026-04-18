@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Reactive;
 using System.Reactive.Linq;
 using ReactiveUI;
@@ -41,6 +42,9 @@ public sealed class ShellViewModel : ReactiveObject
         }, canSave);
 
         OpenModelCommand = ReactiveCommand.Create<string>(OpenModel);
+
+        this.WhenAnyValue(x => x.Explorer).Subscribe(_ =>
+            this.RaisePropertyChanged(nameof(StatusText)));
     }
 
     public ActivityMode ActiveMode
@@ -71,6 +75,11 @@ public sealed class ShellViewModel : ReactiveObject
 
     public ReactiveCommand<Unit, Unit>   SaveCommand      { get; }
     public ReactiveCommand<string, Unit> OpenModelCommand { get; }
+
+    public string StatusText => Explorer is null
+        ? "No model open"
+        : $"{Path.GetFileName(Explorer.Session.SourcePath)}" +
+          (Explorer.Session.IsDirty ? " · unsaved changes" : "");
 
     public void OpenModel(string bimPath)
     {
