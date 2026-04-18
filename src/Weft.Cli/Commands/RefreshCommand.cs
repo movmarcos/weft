@@ -67,9 +67,7 @@ public static class RefreshCommand
                 }
                 workspaceUrl = parse.GetValue(workspace) ?? eff.Workspace;
                 databaseName = parse.GetValue(database)  ?? eff.Database;
-                var mode = parse.GetValue(authMode) == AuthMode.Interactive
-                    ? Enum.Parse<AuthMode>(eff.Auth.Mode)
-                    : parse.GetValue(authMode);
+                var mode = parse.GetValue(authMode) ?? Enum.Parse<AuthMode>(eff.Auth.Mode);
                 authOpts = new AuthOptions(
                     Mode: mode,
                     TenantId: EnvVarExpander.Expand(eff.Auth.TenantId) ?? "",
@@ -86,9 +84,10 @@ public static class RefreshCommand
                 databaseName = parse.GetValue(database)
                     ?? throw new InvalidOperationException("--database required without --config + --target.");
                 authOpts = ProfileResolver.BuildAuthOptions(
-                    parse.GetValue(authMode), parse.GetValue(tenant), parse.GetValue(client),
-                    parse.GetValue(clientSecret), parse.GetValue(certPath), parse.GetValue(certPwd),
-                    parse.GetValue(certThumb));
+                    parse.GetValue(authMode) ?? AuthMode.Interactive,
+                    parse.GetValue(tenant), parse.GetValue(client),
+                    parse.GetValue(clientSecret), parse.GetValue(certPath),
+                    parse.GetValue(certPwd), parse.GetValue(certThumb));
             }
 
             var provider = AuthProviderFactory.Create(authOpts);

@@ -35,8 +35,8 @@ public static class CommonOptions
     public static Option<string?> EffectiveDateOption() =>
         new("--effective-date") { Description = "ISO date used as RefreshPolicy effectiveDate (UTC)." };
 
-    public static Option<AuthMode> AuthModeOption() =>
-        new("--auth") { Description = "Auth mode.", DefaultValueFactory = _ => AuthMode.Interactive };
+    public static Option<AuthMode?> AuthModeOption() =>
+        new("--auth") { Description = "Auth mode (overrides config)." };
 
     public static Option<string?> TenantOption() =>
         new("--tenant") { Description = "AAD tenant id (or env: WEFT_TENANT_ID)." };
