@@ -14,7 +14,8 @@ let selectedIndex = -1;
 
 async function loadIndex() {
   try {
-    const res = await fetch('/search-index.json');
+    const base = (typeof window !== 'undefined' && window.WEFT_BASE) || '';
+    const res = await fetch(base + '/search-index.json');
     if (!res.ok) return;
     entries = await res.json();
   } catch {

@@ -34,6 +34,31 @@ const DATA = join(ROOT, 'data');
 
 const VERSION = 'v1.0.0';
 
+// Deploy-time URL prefix. Empty for root-hosted sites; `/weft` when published
+// under https://<user>.github.io/weft/. Set via env var in docs.yml.
+const BASE = (process.env.BASE_PATH || '').replace(/\/+$/, '');
+
+// Prepend BASE to any absolute href="/..." / src="/..." in a rendered HTML
+// string, and inject window.WEFT_BASE so client-side JS (search.js) can also
+// resolve absolute paths. Leaves protocol-relative (//) paths alone.
+// Idempotent when BASE is empty.
+function applyBase(s) {
+  const baseScript = `<script>window.WEFT_BASE=${JSON.stringify(BASE)};</script>`;
+  let out = s.replace(/<\/head>/i, `${baseScript}\n</head>`);
+  if (!BASE) return out;
+  return out
+    .replace(/(href|src)="\/(?!\/)/g, `$1="${BASE}/`)
+    .replace(/(href|src)='\/(?!\/)/g, `$1='${BASE}/`);
+}
+
+// Rewrite the leading slash in search-index URLs so client-side search
+// navigates to the prefixed page.
+function applyBaseToUrl(u) {
+  if (!BASE) return u;
+  if (u.startsWith('/') && !u.startsWith('//')) return BASE + u;
+  return u;
+}
+
 // --- markdown rendering --------------------------------------------------
 
 let currentH2s = [];
@@ -223,7 +248,7 @@ function renderLoomTiles(tilesData, slugToHref) {
     const row = tilesData.rowPercents[t.row - 1];
     const href = slugToHref.get(t.slug)
       || (t.slug === 'architecture'
-        ? 'https://github.com/marcosmagri/PowerBIAutomationDeploy/blob/master/docs/superpowers/specs/2026-04-18-weft-docs-website-design.md'
+        ? 'https://github.com/movmarcos/weft/blob/master/docs/superpowers/specs/2026-04-18-weft-docs-website-design.md'
         : `/docs/${t.slug}.html`);
     return `<a class="tile ${t.color}" href="${href}" style="left: ${col}%; top: ${row}%;">
         <div class="tile-inner">
@@ -292,7 +317,7 @@ async function build() {
   slugToMeta.set('cli',        { slug: 'cli',        title: 'CLI reference', shortTitle: 'CLI',         eyebrow: 'CLI · Reference',       color: 'green', icon: '⌘', href: '/cli/'       });
   slugToMeta.set('samples',    { slug: 'samples',    title: 'Samples',       shortTitle: 'Samples',     eyebrow: 'Samples · End-to-end',  color: 'gold',  icon: '⊟', href: '/samples/'   });
   slugToMeta.set('exit-codes', { slug: 'exit-codes', title: 'Exit codes',    shortTitle: 'Exit codes',  eyebrow: 'Exit codes · Reference', color: 'gold', icon: '№', href: '/exit-codes/' });
-  slugToMeta.set('architecture', { slug: 'architecture', title: 'Architecture', shortTitle: 'Architecture', eyebrow: 'Architecture · Design',  color: 'green', icon: '⊜', href: 'https://github.com/marcosmagri/PowerBIAutomationDeploy/blob/master/docs/superpowers/specs/2026-04-18-weft-docs-website-design.md' });
+  slugToMeta.set('architecture', { slug: 'architecture', title: 'Architecture', shortTitle: 'Architecture', eyebrow: 'Architecture · Design',  color: 'green', icon: '⊜', href: 'https://github.com/movmarcos/weft/blob/master/docs/superpowers/specs/2026-04-18-weft-docs-website-design.md' });
 
   const slugToHref = new Map(Array.from(slugToMeta.entries(), ([k, v]) => [k, v.href]));
 
@@ -340,13 +365,13 @@ async function build() {
     });
 
     const out = join(DOCS_DIST, `${slug}.html`);
-    await writeFile(out, rendered, 'utf8');
+    await writeFile(out, applyBase(rendered), 'utf8');
     writtenCount++;
     console.log(`wrote ${relative(ROOT, out)}`);
 
     // Collect search entry for this doc page.
     searchEntries.push({
-      url: `/docs/${slug}/`,
+      url: applyBaseToUrl(`/docs/${slug}.html`),
       title: frontmatter.title || slug,
       eyebrow: frontmatter.eyebrow || '',
       headings: currentH2s.map(h => h.text),
@@ -367,7 +392,7 @@ async function build() {
       TILES: tilesHtml,
     });
     const out = join(DIST, 'index.html');
-    await writeFile(out, homeRendered, 'utf8');
+    await writeFile(out, applyBase(homeRendered), 'utf8');
     writtenCount++;
     console.log(`wrote ${relative(ROOT, out)}`);
   }
@@ -423,13 +448,13 @@ ${opts}
     });
     const outDir = join(DIST, 'cli');
     await ensureDir(outDir);
-    await writeFile(join(outDir, 'index.html'), rendered, 'utf8');
+    await writeFile(join(outDir, 'index.html'), applyBase(rendered), 'utf8');
     writtenCount++;
     console.log(`wrote ${relative(ROOT, join(outDir, 'index.html'))}`);
 
     // Search entry for CLI reference.
     searchEntries.push({
-      url: '/cli/',
+      url: applyBaseToUrl('/cli/'),
       title: 'CLI reference',
       eyebrow: 'CLI · Reference',
       headings: cli.commands.map(c => `weft ${c.name}`),
@@ -467,13 +492,13 @@ ${opts}
     });
     const outDir = join(DIST, 'exit-codes');
     await ensureDir(outDir);
-    await writeFile(join(outDir, 'index.html'), rendered, 'utf8');
+    await writeFile(join(outDir, 'index.html'), applyBase(rendered), 'utf8');
     writtenCount++;
     console.log(`wrote ${relative(ROOT, join(outDir, 'index.html'))}`);
 
     // Search entry for exit codes.
     searchEntries.push({
-      url: '/exit-codes/',
+      url: applyBaseToUrl('/exit-codes/'),
       title: 'Exit codes',
       eyebrow: 'Exit codes · Reference',
       headings: ecs.codes.map(c => `${c.code} — ${c.name}`),
@@ -522,13 +547,13 @@ ${opts}
     });
     const outDir = join(DIST, 'samples');
     await ensureDir(outDir);
-    await writeFile(join(outDir, 'index.html'), rendered, 'utf8');
+    await writeFile(join(outDir, 'index.html'), applyBase(rendered), 'utf8');
     writtenCount++;
     console.log(`wrote ${relative(ROOT, join(outDir, 'index.html'))}`);
 
     // Search entry for samples landing.
     searchEntries.push({
-      url: '/samples/',
+      url: applyBaseToUrl('/samples/'),
       title: 'Sample projects',
       eyebrow: 'Samples · End-to-end',
       headings: sampleDirs.map(s => s.title),
@@ -585,13 +610,13 @@ ${opts}
 
     const outDir = join(DIST, 'samples', s.slug);
     await ensureDir(outDir);
-    await writeFile(join(outDir, 'index.html'), rendered, 'utf8');
+    await writeFile(join(outDir, 'index.html'), applyBase(rendered), 'utf8');
     writtenCount++;
     console.log(`wrote ${relative(ROOT, join(outDir, 'index.html'))}`);
 
     // Search entry for this sample.
     searchEntries.push({
-      url: `/samples/${s.slug}/`,
+      url: applyBaseToUrl(`/samples/${s.slug}/`),
       title: s.title,
       eyebrow: `Sample · ${s.slug}`,
       headings: currentH2s.map(h => h.text),
