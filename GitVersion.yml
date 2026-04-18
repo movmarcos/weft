@@ -1,0 +1,19 @@
+mode: ContinuousDelivery
+branches:
+  main:
+    tag: ''
+    increment: Minor
+  master:
+    tag: ''
+    increment: Minor
+  feature:
+    regex: ^features?[/-]
+    tag: alpha
+    increment: Inherit
+  pull-request:
+    regex: ^(pull|pull\-requests|pr)[/-]
+    tag: PullRequest
+    increment: Inherit
+ignore:
+  sha: []
+merge-message-formats: {}
