@@ -40,5 +40,14 @@ public sealed class ConnectionManager
             .ToList();
     }
 
-    // Task 9 adds FetchModelAsync.
+    public async Task<ModelSession> FetchModelAsync(
+        WorkspaceReference workspace,
+        DatasetInfo dataset,
+        AccessToken token,
+        CancellationToken ct)
+    {
+        var db = await _reader.ReadAsync(
+            workspace.Server, dataset.Name, token, ct);
+        return new ModelSession(db, sourcePath: null, readOnly: true);
+    }
 }
