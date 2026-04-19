@@ -35,8 +35,10 @@ public sealed class TargetReader : ITargetReader
         CancellationToken ct)
     {
         using var server = new Server();
-        var conn = new XmlaConnectionStringBuilder().BuildServerOnly(serverUrl, token);
-        server.Connect(conn);
+        server.AccessToken = new Microsoft.AnalysisServices.AccessToken(
+            token.Value,
+            token.ExpiresOnUtc.UtcDateTime);
+        server.Connect($"Provider=MSOLAP;Data Source={serverUrl};");
 
         var names = new List<string>();
         foreach (Database db in server.Databases)
