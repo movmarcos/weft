@@ -11,7 +11,7 @@ namespace WeftStudio.App.Connections;
 /// sign in, list datasets, fetch model. Stateless — callers hold onto
 /// intermediate values (token, workspace ref) between calls.
 /// </summary>
-public sealed class ConnectionManager
+public sealed class ConnectionManager : IConnectionManager
 {
     private readonly Func<AuthOptions, IAuthProvider> _authProviderFactory;
     private readonly ITargetReader _reader;
