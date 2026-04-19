@@ -32,9 +32,36 @@ Studio is cross-platform (Windows / macOS / Linux), built on Avalonia + .NET 10,
 
 ## Install
 
-Studio is open source — easiest install is **clone + build**. You need the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and `git`. Once both are installed, pick your platform below.
+Studio is open source — easiest install is **clone + build**. You need `git` and the **.NET 10 SDK** installed first. Pick your platform.
 
-### Windows (x64)
+### Prerequisites — install .NET 10 SDK
+
+**Windows (PowerShell, recommended — uses winget which ships in Windows 10 19+ and 11):**
+```powershell
+winget install --id Microsoft.DotNet.SDK.10 --source winget
+dotnet --version    # should print 10.x.x
+```
+
+If `winget` is blocked or missing, download the SDK installer from https://dotnet.microsoft.com/download/dotnet/10.0 (Microsoft URL, usually allowed on corporate networks) and run it. Pick **SDK x64** for Intel/AMD, **SDK Arm64** for ARM Windows.
+
+**macOS (Homebrew):**
+```bash
+brew install --cask dotnet-sdk
+dotnet --version
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+# add the Microsoft repo first if you don't have it
+sudo apt install -y dotnet-sdk-10.0
+dotnet --version
+```
+
+For other Linux distros, see https://learn.microsoft.com/dotnet/core/install/linux
+
+### Build Studio
+
+#### Windows (x64)
 
 ```powershell
 git clone https://github.com/movmarcos/weft.git
@@ -45,7 +72,7 @@ C:\WeftStudio\WeftStudio.Ui.exe
 
 That produces a self-contained ~130 MB folder under `C:\WeftStudio` and launches the app. Subsequent runs: just double-click `C:\WeftStudio\WeftStudio.Ui.exe` (or pin to Start menu).
 
-### macOS (Apple Silicon — arm64)
+#### macOS (Apple Silicon — arm64)
 
 ```bash
 git clone https://github.com/movmarcos/weft.git
@@ -58,7 +85,7 @@ For a proper `.app` bundle that shows up in Spotlight, see [the macOS install gi
 
 > **Connect-to-workspace caveat on macOS:** the `Microsoft.AnalysisServices` TOM library Microsoft ships does not include a macOS-native MSOLAP provider. Open `.bim` works, but **Connect to workspace fails** on macOS with `"Authentication failed for all authenticators"`. Use Windows or Linux x64 for the workspace flow until Microsoft ships macOS support, or v0.2 adds a REST fallback.
 
-### Linux (x64)
+#### Linux (x64)
 
 ```bash
 git clone https://github.com/movmarcos/weft.git
@@ -69,7 +96,7 @@ dotnet publish studio/src/WeftStudio.Ui -c Release -r linux-x64 --self-contained
 
 Linux desktop with X11 / Wayland required (Avalonia handles both).
 
-### Environment variable for Connect to workspace
+### Set the AAD ClientId (Connect to workspace only)
 
 Studio v0.1.1 doesn't ship a baked AAD ClientId. To enable the **Sign in** button in the Connect dialog, set `WEFT_STUDIO_CLIENTID` before launch.
 
@@ -92,7 +119,7 @@ Add the `export` to your `~/.zshrc` / `~/.bashrc` to persist. On macOS, GUI apps
 
 If your tenant blocks the Power BI Desktop ClientId via Conditional Access, ask your IT admin to register a dedicated AAD app with XMLA Read scope and use its ClientId instead.
 
-### macOS .app bundle (optional)
+### Optional: macOS .app bundle
 
 The `dotnet publish` command above produces the binary but not a Finder-friendly `.app`. To wrap it:
 
