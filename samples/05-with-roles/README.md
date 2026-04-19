@@ -50,9 +50,13 @@ Click any role to inspect its `Name`, `ModelPermission`, `Description`, etc. The
 
 To deploy to a dev workspace (configure env vars per Sample 01):
 
-```bash
+```os-tabs
+@bash
 weft validate --source ./model.bim
 weft deploy --config ./weft.yaml --target dev
+@powershell
+weft validate --source .\model.bim
+weft deploy --config .\weft.yaml --target dev
 ```
 
 After deploy, assign AAD groups / users to the appropriate roles via Power BI Service → workspace settings → semantic model → Security.

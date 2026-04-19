@@ -86,17 +86,21 @@ hooks:
   preDeploy: ./hooks/notify.sh "arg with spaces"   # BREAKS: 3 args, not 1
 ```
 
-Wrap complex args in a shell script:
+Wrap complex args in a shell script (or PowerShell on Windows):
 
 ```yaml
 hooks:
-  preDeploy: ./hooks/notify.sh
+  preDeploy: ./hooks/notify.sh    # or .\hooks\notify.ps1 on Windows
 ```
 
-```bash
+```os-tabs
+@bash
 #!/bin/sh
 ARG="arg with spaces"
 ./actual-command.sh "$ARG"
+@powershell
+$arg = "arg with spaces"
+.\actual-command.ps1 $arg
 ```
 
 ## Example hooks

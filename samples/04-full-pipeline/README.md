@@ -16,7 +16,8 @@ Unix: `./hooks/notify.sh` (chmod +x). Windows: `./hooks/notify.ps1`. Cross-platf
 
 ## Usage
 
-```bash
+```os-tabs
+@bash
 export WEFT_TENANT_ID=...
 export WEFT_SP_CLIENT_ID=...
 export WEFT_CERT_THUMBPRINT=...
@@ -25,4 +26,13 @@ export WEFT_PROD_DATABASE='TinyStatic'
 
 chmod +x hooks/notify.sh
 weft deploy --config ./weft.yaml --target prod
+@powershell
+$env:WEFT_TENANT_ID      = "..."
+$env:WEFT_SP_CLIENT_ID   = "..."
+$env:WEFT_CERT_THUMBPRINT = "..."
+$env:WEFT_PROD_WORKSPACE = "powerbi://..."
+$env:WEFT_PROD_DATABASE  = "TinyStatic"
+
+# (no chmod needed — Windows uses NTFS Execute permission by default)
+weft deploy --config .\weft.yaml --target prod
 ```

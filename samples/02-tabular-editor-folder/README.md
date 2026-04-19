@@ -16,7 +16,8 @@ Weft stitches the per-table JSON files back into the `database.json` in memory a
 
 ## Usage
 
-```bash
+```os-tabs
+@bash
 export WEFT_TENANT_ID='...'
 export WEFT_CLIENT_ID='...'
 export WEFT_DEV_WORKSPACE='powerbi://api.powerbi.com/v1.0/myorg/YourDevWorkspace'
@@ -24,4 +25,12 @@ export WEFT_DEV_DATABASE='TinyFolder'
 
 weft validate --source ./Model
 weft deploy --config ./weft.yaml --target dev
+@powershell
+$env:WEFT_TENANT_ID     = "..."
+$env:WEFT_CLIENT_ID     = "..."
+$env:WEFT_DEV_WORKSPACE = "powerbi://api.powerbi.com/v1.0/myorg/YourDevWorkspace"
+$env:WEFT_DEV_DATABASE  = "TinyFolder"
+
+weft validate --source .\Model
+weft deploy --config .\weft.yaml --target dev
 ```

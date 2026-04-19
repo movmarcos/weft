@@ -77,13 +77,20 @@ The diff then sees the resolved model, so parameters travel with the TMSL to the
 
 ## Hotfix overrides without editing YAML
 
-```bash
+```os-tabs
+@bash
 export WEFT_PARAM_DatabaseName="EDW_PROD_HOTFIX"
+weft deploy --config weft.yaml --target prod
+@powershell
+$env:WEFT_PARAM_DatabaseName = "EDW_PROD_HOTFIX"
 weft deploy --config weft.yaml --target prod
 ```
 
 Or one-off:
 
-```bash
+```os-tabs
+@bash
+weft deploy --config weft.yaml --target prod --param DatabaseName=EDW_PROD_HOTFIX
+@powershell
 weft deploy --config weft.yaml --target prod --param DatabaseName=EDW_PROD_HOTFIX
 ```

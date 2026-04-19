@@ -22,10 +22,11 @@ This walkthrough deploys a tiny model to your own Power BI Premium workspace.
 
 ## 2. Install
 
-Either download the binary for your OS from the GitHub Releases page, or build from source:
+Either download the binary for your OS from the GitHub Releases page (or `releases/cli-v1.0.0/weft.exe` in the repo for Windows), or build from source:
 
-```bash
-git clone https://github.com/marcosmagri/weft.git
+```os-tabs
+@bash
+git clone https://github.com/movmarcos/weft.git
 cd weft
 dotnet publish src/Weft.Cli/Weft.Cli.csproj \
   --configuration Release \
@@ -33,43 +34,83 @@ dotnet publish src/Weft.Cli/Weft.Cli.csproj \
   --self-contained false \
   --output ./bin
 ./bin/weft --help
+@powershell
+git clone https://github.com/movmarcos/weft.git
+cd weft
+dotnet publish src\Weft.Cli\Weft.Cli.csproj `
+  --configuration Release `
+  --runtime win-x64 `
+  --self-contained true `
+  --output .\bin
+.\bin\weft.exe --help
 ```
 
 ## 3. Grab the sample
 
-```bash
+```os-tabs
+@bash
 cp -r samples/01-simple-bim /tmp/my-first-weft
 cd /tmp/my-first-weft
+@powershell
+Copy-Item -Recurse samples\01-simple-bim $env:TEMP\my-first-weft
+Set-Location $env:TEMP\my-first-weft
 ```
 
 ## 4. Validate
 
-```bash
+```os-tabs
+@bash
 weft validate --source ./model.bim
+# OK: 'TinyStatic' loaded with 2 table(s).
+@powershell
+weft validate --source .\model.bim
 # OK: 'TinyStatic' loaded with 2 table(s).
 ```
 
 ## 5. Set env vars
 
-```bash
+```os-tabs
+@bash
 export WEFT_TENANT_ID='<your tenant guid>'
 export WEFT_CLIENT_ID='<your aad app id>'
 export WEFT_DEV_WORKSPACE='powerbi://api.powerbi.com/v1.0/myorg/YourDevWorkspace'
 export WEFT_DEV_DATABASE='TinyStatic'
+@powershell
+# Persistent (new sessions only — close and reopen this terminal):
+setx WEFT_TENANT_ID     "<your tenant guid>"
+setx WEFT_CLIENT_ID     "<your aad app id>"
+setx WEFT_DEV_WORKSPACE "powerbi://api.powerbi.com/v1.0/myorg/YourDevWorkspace"
+setx WEFT_DEV_DATABASE  "TinyStatic"
+
+# Or just for the current session:
+$env:WEFT_TENANT_ID     = "<your tenant guid>"
+$env:WEFT_CLIENT_ID     = "<your aad app id>"
+$env:WEFT_DEV_WORKSPACE = "powerbi://api.powerbi.com/v1.0/myorg/YourDevWorkspace"
+$env:WEFT_DEV_DATABASE  = "TinyStatic"
 ```
 
 ## 6. Deploy
 
-```bash
+```os-tabs
+@bash
 weft deploy --config ./weft.yaml --target dev --artifacts ./artifacts
+@powershell
+weft deploy --config .\weft.yaml --target dev --artifacts .\artifacts
 ```
 
 First deploy creates the model and refreshes. Second deploy is a no-op.
 
 ## 7. Inspect artifacts
 
-```bash
+```os-tabs
+@bash
 ls artifacts/
+# 20260418-140500-TinyStatic-pre-partitions.json
+# 20260418-140500-TinyStatic-plan.tmsl
+# 20260418-140500-TinyStatic-post-partitions.json
+# 20260418-140500-TinyStatic-receipt.json
+@powershell
+Get-ChildItem artifacts\
 # 20260418-140500-TinyStatic-pre-partitions.json
 # 20260418-140500-TinyStatic-plan.tmsl
 # 20260418-140500-TinyStatic-post-partitions.json

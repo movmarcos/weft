@@ -1,0 +1,57 @@
+/* os-tabs.css — bash / powershell tabbed code blocks */
+
+.os-tabs {
+  margin: 16px 0;
+  border: 1px solid var(--rule, #d8d8d2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.os-tabs-headers {
+  display: flex;
+  background: var(--paper-2, #f4f3ee);
+  border-bottom: 1px solid var(--rule, #d8d8d2);
+}
+
+.os-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft, #666);
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.os-tab-btn:hover {
+  color: var(--ink, #222);
+}
+
+.os-tab-btn.active {
+  color: var(--ink, #222);
+  background: var(--paper, #fff);
+  border-bottom-color: var(--gold, #c39a36);
+  font-weight: 600;
+}
+
+.os-tabs .os-tab-panel {
+  display: none;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.os-tabs .os-tab-panel.active {
+  display: block;
+}
+
+/* Override the standard .code-block border/margin inside the tab container */
+.os-tabs pre.code-block {
+  border: none;
+  border-radius: 0;
+  margin: 0;
+}

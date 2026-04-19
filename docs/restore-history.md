@@ -26,13 +26,22 @@ The target table must still have a `RefreshPolicy` (so the engine knows how to m
 
 ## Usage
 
-```bash
+```os-tabs
+@bash
 weft restore-history \
   --config weft.yaml \
   --target prod \
   --table FactSales \
   --from 2020-01-01 \
   --to 2023-12-31 \
+  --effective-date 2023-12-31
+@powershell
+weft restore-history `
+  --config weft.yaml `
+  --target prod `
+  --table FactSales `
+  --from 2020-01-01 `
+  --to 2023-12-31 `
   --effective-date 2023-12-31
 ```
 
@@ -54,8 +63,12 @@ Under the hood this issues a TMSL `refresh` with `type: "full"`, `applyRefreshPo
 
 "We shrunk the rolling window from 5y to 3y last quarter. Finance now needs Q4-2021 back for audit."
 
-```bash
+```os-tabs
+@bash
 weft restore-history --config weft.yaml --target prod \
+  --table FactSales --from 2021-10-01 --to 2021-12-31
+@powershell
+weft restore-history --config weft.yaml --target prod `
   --table FactSales --from 2021-10-01 --to 2021-12-31
 ```
 

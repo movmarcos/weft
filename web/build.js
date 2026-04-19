@@ -77,8 +77,54 @@ function slugify(text) {
 }
 
 const renderer = new marked.Renderer();
+
+// OS-tabs: a fenced block with `os-tabs` language renders as a tabbed widget
+// for bash / powershell variants. Body uses @bash / @powershell markers:
+//
+//     ```os-tabs
+//     @bash
+//     weft validate --source ./model.bim
+//     @powershell
+//     weft validate --source .\model.bim
+//     ```
+//
+// Each section gets Prism syntax highlighting via its native language.
+function renderOsTabs(body) {
+  const sections = {};
+  let currentOs = null;
+  const lines = body.split('\n');
+  for (const line of lines) {
+    const m = line.match(/^@(bash|powershell)\s*$/);
+    if (m) {
+      currentOs = m[1];
+      sections[currentOs] = sections[currentOs] || [];
+      continue;
+    }
+    if (currentOs) sections[currentOs].push(line);
+  }
+  // Trim leading/trailing blank lines per section.
+  const order = ['bash', 'powershell'];
+  const labels = { bash: 'Bash', powershell: 'PowerShell' };
+  const headers = [];
+  const panels = [];
+  let isFirst = true;
+  for (const os of order) {
+    if (!sections[os]) continue;
+    const code = sections[os].join('\n').replace(/^\n+|\n+$/g, '');
+    const highlighted = Prism.languages[os]
+      ? Prism.highlight(code, Prism.languages[os], os)
+      : htmlEscape(code);
+    const activeCls = isFirst ? ' active' : '';
+    headers.push(`<button type="button" class="os-tab-btn${activeCls}" data-os="${os}" role="tab">${labels[os]}</button>`);
+    panels.push(`<pre class="code-block language-${os} os-tab-panel${activeCls}" data-lang="${os}" data-os="${os}"><code class="language-${os}">${highlighted}</code></pre>`);
+    isFirst = false;
+  }
+  return `<div class="os-tabs"><div class="os-tabs-headers" role="tablist">${headers.join('')}</div>${panels.join('')}</div>`;
+}
+
 renderer.code = (code, infostring) => {
   const lang = (infostring || '').trim().split(/\s+/)[0];
+  if (lang === 'os-tabs') return renderOsTabs(code);
   if (lang && Prism.languages[lang]) {
     const highlighted = Prism.highlight(code, Prism.languages[lang], lang);
     return `<pre class="code-block language-${lang}" data-lang="${lang}"><code class="language-${lang}">${highlighted}</code></pre>`;

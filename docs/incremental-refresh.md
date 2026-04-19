@@ -88,7 +88,10 @@ defaults:
 
 CLI shortcut:
 
-```bash
+```os-tabs
+@bash
+weft deploy --config weft.yaml --target prod --reset-bookmarks
+@powershell
 weft deploy --config weft.yaml --target prod --reset-bookmarks
 ```
 

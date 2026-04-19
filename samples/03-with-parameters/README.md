@@ -17,16 +17,26 @@ The `parameters:` block declares required parameters at the top level. Each prof
 
 ## Usage
 
-```bash
+```os-tabs
+@bash
 weft deploy --config ./weft.yaml --target prod
+# → rewrites DatabaseName → "EDW_PROD", ServerName → "prod-sql.corp.local"
+#   before diffing against target
+@powershell
+weft deploy --config .\weft.yaml --target prod
 # → rewrites DatabaseName → "EDW_PROD", ServerName → "prod-sql.corp.local"
 #   before diffing against target
 ```
 
 Ad-hoc override (e.g., a hotfix deploy):
 
-```bash
+```os-tabs
+@bash
 export WEFT_PARAM_DatabaseName="EDW_PROD_HOTFIX"
 weft deploy --config ./weft.yaml --target prod
+# → DatabaseName="EDW_PROD_HOTFIX" wins over the profile YAML
+@powershell
+$env:WEFT_PARAM_DatabaseName = "EDW_PROD_HOTFIX"
+weft deploy --config .\weft.yaml --target prod
 # → DatabaseName="EDW_PROD_HOTFIX" wins over the profile YAML
 ```

@@ -108,19 +108,25 @@ Studio v0.1.1 doesn't ship a baked AAD ClientId. To enable the **Sign in** butto
 
 The Power BI Desktop public ClientId works in most tenants without IT registering anything new (used by Tabular Editor, ALM Toolkit, etc.):
 
-**Windows (CMD or PowerShell, one-line, persists across reboots):**
-```
+```os-tabs
+@bash
+# Current shell only:
+export WEFT_STUDIO_CLIENTID=872cd9fa-d31f-45e0-9eab-6e460a02d1f1
+
+# Persist for new shells — add to your ~/.zshrc or ~/.bashrc:
+echo 'export WEFT_STUDIO_CLIENTID=872cd9fa-d31f-45e0-9eab-6e460a02d1f1' >> ~/.zshrc
+
+# On macOS, also seed the launchd environment so Finder-launched apps see it:
+launchctl setenv WEFT_STUDIO_CLIENTID 872cd9fa-d31f-45e0-9eab-6e460a02d1f1
+@powershell
+# Persistent (new sessions only — close and reopen this terminal):
 setx WEFT_STUDIO_CLIENTID 872cd9fa-d31f-45e0-9eab-6e460a02d1f1
+
+# Or just for the current session (no relaunch needed):
+$env:WEFT_STUDIO_CLIENTID = "872cd9fa-d31f-45e0-9eab-6e460a02d1f1"
 ```
 
 `setx` only affects new processes — close the terminal you ran it in, then re-launch Studio from Explorer or a fresh terminal.
-
-**macOS / Linux (current shell):**
-```bash
-export WEFT_STUDIO_CLIENTID=872cd9fa-d31f-45e0-9eab-6e460a02d1f1
-```
-
-Add the `export` to your `~/.zshrc` / `~/.bashrc` to persist. On macOS, GUI apps launched from Finder also need `launchctl setenv WEFT_STUDIO_CLIENTID 872cd9fa-d31f-45e0-9eab-6e460a02d1f1` to pick it up.
 
 If your tenant blocks the Power BI Desktop ClientId via Conditional Access, ask your IT admin to register a dedicated AAD app with XMLA Read scope and use its ClientId instead.
 
