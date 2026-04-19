@@ -1,5 +1,6 @@
 ---
 title: Open from workspace (Studio)
+shortTitle: Workspace open
 eyebrow: Studio · Practical
 order: 10
 color: gold

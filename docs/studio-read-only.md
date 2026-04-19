@@ -1,5 +1,6 @@
 ---
 title: Read-only snapshot semantics (Studio)
+shortTitle: Read-only
 eyebrow: Studio · Practical
 order: 11
 color: gold

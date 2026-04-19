@@ -1,5 +1,6 @@
 ---
 title: Weft Studio
+shortTitle: Studio
 eyebrow: Studio · Practical
 order: 9
 color: gold
