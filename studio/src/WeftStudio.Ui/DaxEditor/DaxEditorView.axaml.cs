@@ -18,30 +18,26 @@ public partial class DaxEditorView : UserControl
     public DaxEditorView()
     {
         InitializeComponent();
-    }
-
-    protected override void OnApplyTemplate(Avalonia.Controls.Primitives.TemplateAppliedEventArgs e)
-    {
-        base.OnApplyTemplate(e);
+        // Find the named TextEditor right after the XAML has been loaded —
+        // OnApplyTemplate is unreliable for UserControls and races against DataContext.
         _editor = this.FindControl<TextEditor>("Editor");
-        if (_editor is null) return;
-
-        _editor.SyntaxHighlighting = LoadDaxHighlighting();
+        if (_editor is not null)
+        {
+            _editor.SyntaxHighlighting = LoadDaxHighlighting();
+            _editor.TextChanged += (_, _) =>
+            {
+                if (DataContext is DaxEditorViewModel vm) vm.Text = _editor.Text;
+            };
+        }
 
         DataContextChanged += (_, _) => Sync();
-        _editor.TextChanged += (_, _) =>
-        {
-            if (DataContext is DaxEditorViewModel vm && _editor is not null)
-                vm.Text = _editor.Text;
-        };
         Sync();
     }
 
     private void Sync()
     {
-        if (_editor is null) return;
-        if (DataContext is DaxEditorViewModel vm && _editor.Text != vm.Text)
-            _editor.Text = vm.Text;
+        if (_editor is null || DataContext is not DaxEditorViewModel vm) return;
+        if (_editor.Text != vm.Text) _editor.Text = vm.Text;
     }
 
     private static IHighlightingDefinition LoadDaxHighlighting()
