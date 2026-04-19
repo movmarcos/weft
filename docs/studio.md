@@ -32,17 +32,93 @@ Studio is cross-platform (Windows / macOS / Linux), built on Avalonia + .NET 10,
 
 ## Install
 
-Studio releases are published as platform binaries on [GitHub Releases](https://github.com/movmarcos/weft/releases). Look for the `weft-studio-v*` tags.
+Studio is open source — easiest install is **clone + build**. You need the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and `git`. Once both are installed, pick your platform below.
 
-To build from source:
+### Windows (x64)
+
+```powershell
+git clone https://github.com/movmarcos/weft.git
+cd weft
+dotnet publish studio/src/WeftStudio.Ui -c Release -r win-x64 --self-contained true -o C:\WeftStudio
+C:\WeftStudio\WeftStudio.Ui.exe
+```
+
+That produces a self-contained ~130 MB folder under `C:\WeftStudio` and launches the app. Subsequent runs: just double-click `C:\WeftStudio\WeftStudio.Ui.exe` (or pin to Start menu).
+
+### macOS (Apple Silicon — arm64)
 
 ```bash
 git clone https://github.com/movmarcos/weft.git
 cd weft
-dotnet run --project studio/src/WeftStudio.Ui
+dotnet publish studio/src/WeftStudio.Ui -c Release -r osx-arm64 --self-contained true -o ~/Applications/WeftStudio
+open ~/Applications/WeftStudio/WeftStudio.Ui
 ```
 
-Requires the .NET 10 SDK.
+For a proper `.app` bundle that shows up in Spotlight, see [the macOS install gist](https://github.com/movmarcos/weft/blob/master/docs/studio.md#macos-app-bundle-optional) below.
+
+> **Connect-to-workspace caveat on macOS:** the `Microsoft.AnalysisServices` TOM library Microsoft ships does not include a macOS-native MSOLAP provider. Open `.bim` works, but **Connect to workspace fails** on macOS with `"Authentication failed for all authenticators"`. Use Windows or Linux x64 for the workspace flow until Microsoft ships macOS support, or v0.2 adds a REST fallback.
+
+### Linux (x64)
+
+```bash
+git clone https://github.com/movmarcos/weft.git
+cd weft
+dotnet publish studio/src/WeftStudio.Ui -c Release -r linux-x64 --self-contained true -o ~/weftstudio
+~/weftstudio/WeftStudio.Ui
+```
+
+Linux desktop with X11 / Wayland required (Avalonia handles both).
+
+### Environment variable for Connect to workspace
+
+Studio v0.1.1 doesn't ship a baked AAD ClientId. To enable the **Sign in** button in the Connect dialog, set `WEFT_STUDIO_CLIENTID` before launch.
+
+The Power BI Desktop public ClientId works in most tenants without IT registering anything new (used by Tabular Editor, ALM Toolkit, etc.):
+
+**Windows (PowerShell, persists across reboots):**
+```powershell
+[Environment]::SetEnvironmentVariable(
+    "WEFT_STUDIO_CLIENTID",
+    "872cd9fa-d31f-45e0-9eab-6e460a02d1f1",
+    "User")
+```
+
+**macOS / Linux (current shell):**
+```bash
+export WEFT_STUDIO_CLIENTID=872cd9fa-d31f-45e0-9eab-6e460a02d1f1
+```
+
+Add the `export` to your `~/.zshrc` / `~/.bashrc` to persist. On macOS, GUI apps launched from Finder also need `launchctl setenv WEFT_STUDIO_CLIENTID 872cd9fa-d31f-45e0-9eab-6e460a02d1f1` to pick it up.
+
+If your tenant blocks the Power BI Desktop ClientId via Conditional Access, ask your IT admin to register a dedicated AAD app with XMLA Read scope and use its ClientId instead.
+
+### macOS .app bundle (optional)
+
+The `dotnet publish` command above produces the binary but not a Finder-friendly `.app`. To wrap it:
+
+```bash
+APP=~/Applications/WeftStudio.app
+rm -rf "$APP"
+mkdir -p "$APP/Contents/MacOS"
+cp -R ~/Applications/WeftStudio/. "$APP/Contents/MacOS/"
+cat > "$APP/Contents/Info.plist" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CFBundleExecutable</key><string>WeftStudio.Ui</string>
+  <key>CFBundleIdentifier</key><string>com.marcosmagri.weftstudio</string>
+  <key>CFBundleName</key><string>Weft Studio</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>0.1.1</string>
+  <key>NSHighResolutionCapable</key><true/>
+</dict></plist>
+EOF
+codesign --force --deep --sign - "$APP"
+xattr -dr com.apple.quarantine "$APP"
+open "$APP"
+```
+
+Now it shows up in Spotlight and double-clicks from Finder.
 
 ## First-run configuration
 
