@@ -14,8 +14,11 @@
 
     <StackPanel Grid.Row="2" Orientation="Vertical" Spacing="4">
       <TextBlock Text="XMLA endpoint URL"/>
-      <TextBox Text="{Binding Url}" FontFamily="Cascadia Mono,Menlo,monospace"
-               Watermark="powerbi://api.powerbi.com/v1.0/myorg/&lt;workspace&gt;"/>
+      <AutoCompleteBox Text="{Binding Url, Mode=TwoWay}"
+                       ItemsSource="{Binding RecentUrls}"
+                       FontFamily="Cascadia Mono,Menlo,monospace"
+                       Watermark="powerbi://api.powerbi.com/v1.0/myorg/&lt;workspace&gt;"
+                       FilterMode="Contains"/>
       <TextBlock Text="{Binding UrlError}" Foreground="#b33" FontSize="11"
                  IsVisible="{Binding UrlError, Converter={x:Static connect:NotNullConverter.Instance}}"/>
     </StackPanel>

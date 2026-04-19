@@ -73,11 +73,34 @@ public partial class ShellWindow : Window
                 baked: ""),
         };
 
+        var store = new WeftStudio.App.Settings.SettingsStore(
+            WeftStudio.App.Settings.SettingsStore.DefaultDirectory);
+        var settings = store.Load();
+        dialogVm.RecentUrls = settings.RecentWorkspaces
+            .OrderByDescending(w => w.LastUsedUtc)
+            .Select(w => w.WorkspaceUrl)
+            .Distinct()
+            .Take(10)
+            .ToList();
+
         var dialog = new ConnectDialog { DataContext = dialogVm };
         await dialog.ShowDialog(this);
 
         if (dialog.Result is not null)
+        {
             vm.AdoptSession(dialog.Result, workspaceLabel: dialog.WorkspaceLabel);
+
+            var updated = store.Load();
+            updated.RecentWorkspaces.RemoveAll(w => w.WorkspaceUrl == dialogVm.Url);
+            updated.RecentWorkspaces.Insert(0, new WeftStudio.App.Settings.RecentWorkspace(
+                WorkspaceUrl: dialogVm.Url,
+                LastDatasetName: dialog.WorkspaceLabel ?? "",
+                AuthMode: dialogVm.AuthMode.ToString(),
+                LastUsedUtc: DateTime.UtcNow));
+            if (updated.RecentWorkspaces.Count > 10)
+                updated.RecentWorkspaces.RemoveRange(10, updated.RecentWorkspaces.Count - 10);
+            store.Save(updated);
+        }
     }
 
     private void OnExit(object? sender, RoutedEventArgs e)

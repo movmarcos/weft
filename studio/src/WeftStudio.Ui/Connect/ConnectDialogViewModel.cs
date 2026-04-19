@@ -109,6 +109,8 @@ public sealed class ConnectDialogViewModel : ReactiveObject
 
     public bool CanSignIn => _canSignIn.Value;
 
+    public List<string> RecentUrls { get; set; } = new();
+
     public DatasetRow? SelectedRow
     {
         get => _selectedRow;
