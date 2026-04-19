@@ -1,0 +1,19 @@
+source: ./model.bim
+
+targets:
+  dev:
+    workspace: ${WEFT_DEV_WORKSPACE}
+    database:  RolesDemo
+    auth:
+      mode: interactive
+      tenantId: ${WEFT_TENANT_ID}
+      clientId: ${WEFT_CLIENT_ID}
+
+  prod:
+    workspace: ${WEFT_PROD_WORKSPACE}
+    database:  RolesDemo
+    auth:
+      mode: serviceprincipalcertstore
+      tenantId:        ${WEFT_TENANT_ID}
+      clientId:        ${WEFT_CLIENT_ID}
+      certThumbprint:  ${WEFT_CERT_THUMBPRINT}

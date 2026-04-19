@@ -38,6 +38,10 @@ public sealed class ExplorerViewModel : ReactiveObject
         foreach (var r in s.Database.Model.Relationships)
             rels.Children.Add(new TreeNode(r.Name, r));
 
-        return new ObservableCollection<TreeNode> { tables, measures, rels };
+        var roles = new TreeNode("Roles");
+        foreach (var role in s.Database.Model.Roles)
+            roles.Children.Add(new TreeNode(role.Name, role));
+
+        return new ObservableCollection<TreeNode> { tables, measures, rels, roles };
     }
 }

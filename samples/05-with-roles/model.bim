@@ -1,0 +1,97 @@
+{
+  "name": "RolesDemo",
+  "compatibilityLevel": 1600,
+  "model": {
+    "culture": "en-US",
+    "tables": [
+      {
+        "name": "DimDate",
+        "columns": [
+          { "name": "Date", "dataType": "dateTime", "sourceColumn": "Date" },
+          { "name": "Year", "dataType": "int64",   "sourceColumn": "Year" }
+        ],
+        "partitions": [
+          {
+            "name": "DimDate",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let Source = #table({\"Date\",\"Year\"}, {{#date(2025,1,1), 2025}, {#date(2026,1,1), 2026}}) in Source"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Sales",
+        "columns": [
+          { "name": "Date",   "dataType": "dateTime", "sourceColumn": "Date" },
+          { "name": "Region", "dataType": "string",   "sourceColumn": "Region" },
+          { "name": "Amount", "dataType": "double",   "sourceColumn": "Amount" }
+        ],
+        "partitions": [
+          {
+            "name": "Sales",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let Source = #table({\"Date\",\"Region\",\"Amount\"}, {}) in Source"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Total Sales",
+            "expression": "SUM(Sales[Amount])",
+            "formatString": "#,##0.00",
+            "description": "Sum of Amount across all rows visible to the current security context."
+          },
+          {
+            "name": "East Sales",
+            "expression": "CALCULATE([Total Sales], Sales[Region] = \"East\")",
+            "formatString": "#,##0.00"
+          },
+          {
+            "name": "Sales YoY %",
+            "expression": "DIVIDE([Total Sales] - CALCULATE([Total Sales], SAMEPERIODLASTYEAR(DimDate[Date])), CALCULATE([Total Sales], SAMEPERIODLASTYEAR(DimDate[Date])))",
+            "formatString": "0.0%"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "rel_sales_dimdate",
+        "fromTable":  "Sales",   "fromColumn": "Date",
+        "toTable":    "DimDate", "toColumn":   "Date"
+      }
+    ],
+    "roles": [
+      {
+        "name": "Read All",
+        "description": "Full read access to every table and measure.",
+        "modelPermission": "read"
+      },
+      {
+        "name": "East Region Only",
+        "description": "Read access, but the Sales table is row-filtered to Region = \"East\".",
+        "modelPermission": "read",
+        "tablePermissions": [
+          {
+            "name": "Sales",
+            "filterExpression": "[Region] = \"East\""
+          }
+        ]
+      },
+      {
+        "name": "Refresh Only",
+        "description": "Can trigger refresh but cannot query data — useful for service accounts driving scheduled refreshes.",
+        "modelPermission": "refresh"
+      },
+      {
+        "name": "No Access",
+        "description": "Explicit deny — modelPermission: none. Useful as a default for inactive users.",
+        "modelPermission": "none"
+      }
+    ]
+  }
+}

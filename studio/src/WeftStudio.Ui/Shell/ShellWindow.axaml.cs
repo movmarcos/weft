@@ -57,7 +57,12 @@ public partial class ShellWindow : Window
 
     private void OnTreeSelectionChanged(object? payload)
     {
-        if (DataContext is ShellViewModel vm) vm.ShowInspectorFor(payload);
+        if (DataContext is not ShellViewModel vm) return;
+        vm.ShowInspectorFor(payload);
+        // Selecting a measure also brings up its DAX tab in the middle pane.
+        // OpenMeasure de-dupes — if a tab for this measure is already open, it just focuses it.
+        if (payload is Microsoft.AnalysisServices.Tabular.Measure m)
+            vm.OpenMeasure(m.Table.Name, m.Name);
     }
 
     private async void OnFileOpen(object? sender, RoutedEventArgs e)
