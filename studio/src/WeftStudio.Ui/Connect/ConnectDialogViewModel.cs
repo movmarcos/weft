@@ -51,6 +51,33 @@ public sealed class ConnectDialogViewModel : ReactiveObject
 
     public ObservableCollection<DatasetRow> Datasets { get; } = new();
 
+    private string _filterText = "";
+    public string FilterText
+    {
+        get => _filterText;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _filterText, value);
+            RefreshVisibleDatasets();
+        }
+    }
+
+    public ObservableCollection<DatasetRow> VisibleDatasets { get; } = new();
+
+    private void RefreshVisibleDatasets()
+    {
+        VisibleDatasets.Clear();
+        var filter = _filterText;
+        foreach (var row in Datasets)
+        {
+            if (string.IsNullOrWhiteSpace(filter) ||
+                row.Name.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            {
+                VisibleDatasets.Add(row);
+            }
+        }
+    }
+
     public string ClientId { get; set; } = "";
     public AuthMode AuthMode { get; set; } = AuthMode.Interactive;
 
@@ -86,6 +113,7 @@ public sealed class ConnectDialogViewModel : ReactiveObject
             foreach (var d in datasets) Datasets.Add(new DatasetRow(d));
 
             State = ConnectDialogState.Picker;
+            RefreshVisibleDatasets();
         }
         catch (Exception ex)
         {
