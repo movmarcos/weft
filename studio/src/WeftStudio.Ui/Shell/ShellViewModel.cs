@@ -25,6 +25,8 @@ public sealed class ShellViewModel : ReactiveObject
     private ExplorerViewModel? _explorer;
     private DaxEditorViewModel? _activeTab;
     private InspectorViewModel? _inspector;
+    private bool _isReadOnly;
+    private string? _workspaceLabel;
 
     public ShellViewModel()
     {
@@ -34,7 +36,8 @@ public sealed class ShellViewModel : ReactiveObject
             else Inspector = new InspectorViewModel(Explorer.Session, tab.TableName, tab.MeasureName);
         });
 
-        var canSave = this.WhenAnyValue(x => x.Explorer).Select(exp => exp is not null);
+        var canSave = this.WhenAnyValue(x => x.Explorer, x => x.IsReadOnly,
+            (exp, ro) => exp is not null && !ro);
 
         SaveCommand = ReactiveCommand.Create(() =>
         {
@@ -73,6 +76,18 @@ public sealed class ShellViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _inspector, value);
     }
 
+    public bool IsReadOnly
+    {
+        get => _isReadOnly;
+        private set => this.RaiseAndSetIfChanged(ref _isReadOnly, value);
+    }
+
+    public string? WorkspaceLabel
+    {
+        get => _workspaceLabel;
+        private set => this.RaiseAndSetIfChanged(ref _workspaceLabel, value);
+    }
+
     public ReactiveCommand<Unit, Unit>   SaveCommand      { get; }
     public ReactiveCommand<string, Unit> OpenModelCommand { get; }
 
@@ -81,10 +96,23 @@ public sealed class ShellViewModel : ReactiveObject
         : $"{Path.GetFileName(Explorer.Session.SourcePath)}" +
           (Explorer.Session.IsDirty ? " · unsaved changes" : "");
 
+    /// <summary>
+    /// Installs a pre-built ModelSession into the shell (used by the
+    /// Connect-to-workspace flow). OpenModel still handles the .bim path.
+    /// </summary>
+    public void AdoptSession(ModelSession session, string? workspaceLabel = null)
+    {
+        Explorer = new ExplorerViewModel(session);
+        IsReadOnly = session.ReadOnly;
+        WorkspaceLabel = workspaceLabel;
+    }
+
     public void OpenModel(string bimPath)
     {
         var session = ModelSession.OpenBim(bimPath);
         Explorer = new ExplorerViewModel(session);
+        IsReadOnly = false;
+        WorkspaceLabel = null;
 
         var s = _store.Load();
         s.RecentFiles.Remove(bimPath);
