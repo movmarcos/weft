@@ -1,5 +1,6 @@
 ---
 title: Incremental refresh
+shortTitle: Incremental
 eyebrow: Refresh · Safety-critical
 order: 5
 color: pink

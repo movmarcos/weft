@@ -1,5 +1,6 @@
 ---
 title: Partition preservation — the core guarantee
+shortTitle: Partitions
 eyebrow: Partitions · Safety-critical
 order: 4
 color: pink

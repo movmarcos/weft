@@ -1,5 +1,6 @@
 ---
 title: Getting started with Weft
+shortTitle: Get started
 eyebrow: Quickstart · Practical
 order: 1
 color: gold

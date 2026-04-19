@@ -1,5 +1,6 @@
 ---
 title: Restore history
+shortTitle: Restore
 eyebrow: Restore · Safety-critical
 order: 6
 color: pink
