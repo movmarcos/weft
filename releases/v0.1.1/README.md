@@ -31,16 +31,25 @@ Works out of the box. No setup needed.
 
 The Sign-in button stays disabled until you set an AAD ClientId. v0.1.1 doesn't ship one baked in. Easiest path: borrow Power BI Desktop's well-known public ClientId — it's a Microsoft first-party app pre-approved in most tenants, used by Tabular Editor, ALM Toolkit, and other community tools.
 
-**Set the env var (PowerShell, one-time, persists across reboots):**
+**Set the env var (works in CMD or PowerShell, one-time, persists across reboots):**
 
-```powershell
-[Environment]::SetEnvironmentVariable(
-    "WEFT_STUDIO_CLIENTID",
-    "872cd9fa-d31f-45e0-9eab-6e460a02d1f1",
-    "User")
+```
+setx WEFT_STUDIO_CLIENTID 872cd9fa-d31f-45e0-9eab-6e460a02d1f1
 ```
 
-**Then close Studio and re-open** `C:\WeftStudio\WeftStudio.Ui.exe`. The Sign-in button should now enable when you paste a valid `powerbi://` URL.
+You should see `SUCCESS: Specified value was saved.`
+
+**Important: `setx` only affects NEW processes.** Close Studio AND close the terminal window you ran `setx` in. Open a **new** terminal (or just relaunch Studio from Windows Explorer / Start menu) and the env var will be picked up.
+
+Verify it took effect (open a fresh terminal):
+
+```
+echo %WEFT_STUDIO_CLIENTID%
+```
+
+Should print the GUID. If it prints `%WEFT_STUDIO_CLIENTID%` literally, you're still in the old session — open a new terminal.
+
+Then launch `C:\WeftStudio\WeftStudio.Ui.exe`. The Sign-in button should enable once you paste a valid `powerbi://` URL.
 
 If your tenant blocks the Power BI Desktop ClientId via Conditional Access (you'll get an `AADSTS53003` or similar), ask your IT admin to register a dedicated AAD app for Studio (with delegated `Dataset.Read.All` on Power BI) and use that ClientId instead.
 

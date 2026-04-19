@@ -104,13 +104,12 @@ Studio v0.1.1 doesn't ship a baked AAD ClientId. To enable the **Sign in** butto
 
 The Power BI Desktop public ClientId works in most tenants without IT registering anything new (used by Tabular Editor, ALM Toolkit, etc.):
 
-**Windows (PowerShell, persists across reboots):**
-```powershell
-[Environment]::SetEnvironmentVariable(
-    "WEFT_STUDIO_CLIENTID",
-    "872cd9fa-d31f-45e0-9eab-6e460a02d1f1",
-    "User")
+**Windows (CMD or PowerShell, one-line, persists across reboots):**
 ```
+setx WEFT_STUDIO_CLIENTID 872cd9fa-d31f-45e0-9eab-6e460a02d1f1
+```
+
+`setx` only affects new processes — close the terminal you ran it in, then re-launch Studio from Explorer or a fresh terminal.
 
 **macOS / Linux (current shell):**
 ```bash
