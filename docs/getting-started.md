@@ -160,9 +160,44 @@ weft deploy --config .\weft.yaml --target dev --artifacts .\artifacts
 
 | Flag | Meaning |
 |---|---|
-| `--config ./weft.yaml` | Tells Weft which configuration file to read. The YAML defines auth mode, target workspaces, parameters, hooks. The sample's YAML is short — open it and read it. |
+| `--config ./weft.yaml` | Tells Weft which configuration file to read. The YAML defines the **source path**, auth mode, target workspaces, parameters, and hooks. The sample's YAML is short — open it and read it. |
 | `--target dev` | Picks the `dev` profile from the YAML. The same YAML can define `prod`, `uat`, etc. — `--target` selects one. |
 | `--artifacts ./artifacts` | Tells Weft to write its audit trail (more on this in step 7) into a folder called `./artifacts/`. If you skip this flag, Weft uses a default folder under your home directory. |
+
+### Where does the source come from?
+
+Notice there's no `--source` flag in the deploy command above. That's because the sample's `weft.yaml` declares it:
+
+```yaml
+source:
+  format: bim
+  path: ./model.bim
+```
+
+Weft resolves the source in this order, **highest priority first**:
+
+1. `--source <path>` on the CLI (use this for ad-hoc overrides without editing YAML).
+2. `source.path` from `weft.yaml`.
+3. If neither is set, deploy fails with `Source not provided…`.
+
+So both invocations work equivalently for the sample:
+
+```os-tabs
+@bash
+# Source comes from weft.yaml's source.path
+weft deploy --config ./weft.yaml --target dev --artifacts ./artifacts
+
+# Or override explicitly — useful for one-off "deploy this other .bim"
+weft deploy --source ./other-model.bim --config ./weft.yaml --target dev --artifacts ./artifacts
+@powershell
+# Source comes from weft.yaml's source.path
+weft deploy --config .\weft.yaml --target dev --artifacts .\artifacts
+
+# Or override explicitly — useful for one-off "deploy this other .bim"
+weft deploy --source .\other-model.bim --config .\weft.yaml --target dev --artifacts .\artifacts
+```
+
+The same fallback applies to `--workspace` and `--database` — they come from the profile in `weft.yaml` unless you pass the flag explicitly.
 
 ### What actually happens during a deploy
 
