@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Globalization;
+using Avalonia.Data;
 using Avalonia.Data.Converters;
 
 namespace WeftStudio.Ui.Connect;
@@ -40,4 +41,24 @@ public sealed class StateNotPickerConverter : IValueConverter
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         throw new NotSupportedException();
+}
+
+/// <summary>Two-way converter that maps an enum value to/from a bool for RadioButton binding.</summary>
+public sealed class EnumEqualsConverter : IValueConverter
+{
+    public static readonly EnumEqualsConverter Instance = new();
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is null || parameter is null) return false;
+        return string.Equals(value.ToString(), parameter.ToString(), StringComparison.Ordinal);
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        // RadioButton sends true when selected; map back to the parameter's enum value.
+        if (value is true && parameter is not null && targetType.IsEnum)
+            return Enum.Parse(targetType, parameter.ToString()!, ignoreCase: false);
+        return BindingOperations.DoNothing;
+    }
 }

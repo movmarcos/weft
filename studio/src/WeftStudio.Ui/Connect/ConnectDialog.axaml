@@ -22,8 +22,14 @@
 
     <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="16" Margin="0,10,0,10">
       <TextBlock Text="Sign-in method" VerticalAlignment="Center"/>
-      <RadioButton Content="Interactive" GroupName="auth" IsChecked="True"/>
-      <RadioButton Content="Device code" GroupName="auth"/>
+      <RadioButton Content="Interactive" GroupName="auth"
+                   IsChecked="{Binding AuthMode, Mode=TwoWay,
+                                       Converter={x:Static connect:EnumEqualsConverter.Instance},
+                                       ConverterParameter=Interactive}"/>
+      <RadioButton Content="Device code" GroupName="auth"
+                   IsChecked="{Binding AuthMode, Mode=TwoWay,
+                                       Converter={x:Static connect:EnumEqualsConverter.Instance},
+                                       ConverterParameter=DeviceCode}"/>
     </StackPanel>
 
     <Grid Grid.Row="4" RowDefinitions="Auto,*">

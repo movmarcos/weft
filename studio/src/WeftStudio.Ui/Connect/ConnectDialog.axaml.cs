@@ -26,7 +26,7 @@ public partial class ConnectDialog : Window
         if (session is not null)
         {
             Result = session;
-            WorkspaceLabel = $"{vm.SelectedRow?.Name}";
+            WorkspaceLabel = vm.SelectedRow?.Name;
             Close();
         }
     }
