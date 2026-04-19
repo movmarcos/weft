@@ -1,38 +1,92 @@
 // Copyright (c) Marcos Magri / Weft contributors. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Reflection;
+using Microsoft.AnalysisServices.Tabular;
 using ReactiveUI;
-using WeftStudio.App;
-using WeftStudio.App.Commands;
 
 namespace WeftStudio.Ui.Inspector;
 
+/// <summary>
+/// Generic read-only inspector for any TOM object selected in the Explorer tree.
+/// Reflects public scalar properties (primitives, strings, enums, DateTime, Guid,
+/// nullable wrappers) into a flat name/value grid. Skips collections and complex
+/// objects — those would clutter the panel for v0.1.x viewing.
+/// </summary>
 public sealed class InspectorViewModel : ReactiveObject
 {
-    private readonly ModelSession _session;
-    private readonly string _tableName;
-    private string _originalName;
-    private string _name;
+    public string ObjectType { get; }
+    public string ObjectName { get; }
+    public ObservableCollection<PropertyRow> Properties { get; } = new();
 
-    public InspectorViewModel(ModelSession session, string tableName, string measureName)
+    public InspectorViewModel(object tomObject)
     {
-        _session = session;
-        _tableName = tableName;
-        _originalName = measureName;
-        _name = measureName;
+        ObjectType = FriendlyTypeName(tomObject);
+        ObjectName = ReadName(tomObject);
+        PopulateProperties(tomObject);
     }
 
-    public string Name
+    private static string FriendlyTypeName(object o) => o switch
     {
-        get => _name;
-        set => this.RaiseAndSetIfChanged(ref _name, value);
+        Table         => "TABLE",
+        Measure       => "MEASURE",
+        Column        => "COLUMN",
+        Relationship  => "RELATIONSHIP",
+        Partition     => "PARTITION",
+        ModelRole     => "ROLE",
+        Hierarchy     => "HIERARCHY",
+        _             => o.GetType().Name.ToUpperInvariant(),
+    };
+
+    private static string ReadName(object o)
+    {
+        var prop = o.GetType().GetProperty("Name");
+        var v = prop?.GetValue(o)?.ToString();
+        return string.IsNullOrEmpty(v) ? "(unnamed)" : v;
     }
 
-    public void CommitRename()
+    private void PopulateProperties(object o)
     {
-        if (_name == _originalName) return;
-        var cmd = new RenameMeasureCommand(_tableName, _originalName, _name);
-        _session.ChangeTracker.Execute(_session.Database, cmd);
-        _originalName = _name;
+        var props = o.GetType()
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => IsDisplayable(p.PropertyType))
+            .OrderBy(p => p.Name);
+
+        foreach (var p in props)
+        {
+            string value;
+            try
+            {
+                value = Format(p.GetValue(o));
+            }
+            catch
+            {
+                // Some TOM properties throw on detached or partially-loaded objects.
+                continue;
+            }
+            Properties.Add(new PropertyRow(p.Name, value));
+        }
     }
+
+    private static bool IsDisplayable(System.Type t)
+    {
+        var u = Nullable.GetUnderlyingType(t) ?? t;
+        return u.IsPrimitive
+            || u == typeof(string)
+            || u == typeof(DateTime)
+            || u == typeof(Guid)
+            || u == typeof(decimal)
+            || u.IsEnum;
+    }
+
+    private static string Format(object? value) => value switch
+    {
+        null            => "",
+        string s        => s,
+        DateTime dt     => dt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture),
+        bool b          => b ? "true" : "false",
+        _               => value.ToString() ?? "",
+    };
 }

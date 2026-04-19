@@ -46,11 +46,18 @@ public partial class ShellWindow : Window
         if (explorerView is null) return;
         explorerView.MeasureDoubleClicked -= OnMeasureDoubleClicked;
         explorerView.MeasureDoubleClicked += OnMeasureDoubleClicked;
+        explorerView.SelectionChanged -= OnTreeSelectionChanged;
+        explorerView.SelectionChanged += OnTreeSelectionChanged;
     }
 
     private void OnMeasureDoubleClicked(string table, string measure)
     {
         if (DataContext is ShellViewModel vm) vm.OpenMeasure(table, measure);
+    }
+
+    private void OnTreeSelectionChanged(object? payload)
+    {
+        if (DataContext is ShellViewModel vm) vm.ShowInspectorFor(payload);
     }
 
     private async void OnFileOpen(object? sender, RoutedEventArgs e)

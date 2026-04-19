@@ -31,11 +31,9 @@ public sealed class ShellViewModel : ReactiveObject
 
     public ShellViewModel()
     {
-        this.WhenAnyValue(x => x.ActiveTab).Subscribe(tab =>
-        {
-            if (tab is null || Explorer is null) Inspector = null;
-            else Inspector = new InspectorViewModel(Explorer.Session, tab.TableName, tab.MeasureName);
-        });
+        // Inspector is now driven by tree selection (ShowInspectorFor) — see ShellWindow's
+        // ExplorerView.SelectionChanged wiring. Clear it whenever the model swaps.
+        this.WhenAnyValue(x => x.Explorer).Subscribe(_ => Inspector = null);
 
         var canSave = this.WhenAnyValue(x => x.Explorer, x => x.IsReadOnly,
             (exp, ro) => exp is not null && !ro);
@@ -137,6 +135,16 @@ public sealed class ShellViewModel : ReactiveObject
         s.RecentFiles.Insert(0, bimPath);
         if (s.RecentFiles.Count > 10) s.RecentFiles.RemoveRange(10, s.RecentFiles.Count - 10);
         _store.Save(s);
+    }
+
+    /// <summary>
+    /// Populates the right-pane Inspector with properties of a TOM object selected
+    /// in the Explorer tree. Pass null to clear (e.g. category nodes like "Tables"
+    /// have no payload).
+    /// </summary>
+    public void ShowInspectorFor(object? payload)
+    {
+        Inspector = payload is null ? null : new InspectorViewModel(payload);
     }
 
     public void OpenMeasure(string tableName, string measureName)
