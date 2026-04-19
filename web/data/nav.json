@@ -7,6 +7,9 @@
     { "slug": "incremental-refresh", "file": "../docs/incremental-refresh.md" },
     { "slug": "restore-history", "file": "../docs/restore-history.md" },
     { "slug": "hooks", "file": "../docs/hooks.md" },
-    { "slug": "troubleshooting", "file": "../docs/troubleshooting.md" }
+    { "slug": "troubleshooting", "file": "../docs/troubleshooting.md" },
+    { "slug": "studio", "file": "../docs/studio.md" },
+    { "slug": "studio-open-from-workspace", "file": "../docs/studio-open-from-workspace.md" },
+    { "slug": "studio-read-only", "file": "../docs/studio-read-only.md" }
   ]
 }
