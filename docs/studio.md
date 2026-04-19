@@ -32,7 +32,9 @@ Studio is cross-platform (Windows / macOS / Linux), built on Avalonia + .NET 10,
 
 ## Install
 
-Studio is open source — easiest install is **clone + build**. You need `git` and the **.NET 10 SDK** installed first. Pick your platform.
+Studio is open source — easiest install is **clone + build** from source. You need `git` and the **.NET 10 SDK** installed first. Pick your platform.
+
+> **Network blocks .NET install or release downloads?** A pre-built self-contained Windows x64 binary lives in the repo at [`releases/v0.1.1/`](https://github.com/movmarcos/weft/tree/master/releases/v0.1.1) — clone the repo and unzip. No .NET install needed. See [`releases/v0.1.1/README.md`](https://github.com/movmarcos/weft/blob/master/releases/v0.1.1/README.md) for the exact PowerShell.
 
 ### Prerequisites — install .NET 10 SDK
 

@@ -24,6 +24,8 @@ mono_crash.*
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
+# un-ignore the repo-root releases/ dir (binary fallback for blocked networks)
+!/releases/
 x64/
 x86/
 [Ww][Ii][Nn]32/
