@@ -29,6 +29,14 @@ public static class DeployCommand
         var workspace = CommonOptions.WorkspaceOption();
         var database  = CommonOptions.DatabaseOption();
         var artifacts = CommonOptions.ArtifactsOption();
+
+        // Deploy reads source.path / workspace / database from weft.yaml when --config + --target
+        // are supplied. Override the default Required=true so System.CommandLine doesn't reject
+        // the parse before we get a chance to fall back to the YAML — same pattern as
+        // RefreshCommand / RestoreHistoryCommand.
+        src.Required       = false;
+        workspace.Required = false;
+        database.Required  = false;
         var allowDrops = CommonOptions.AllowDropsOption();
         var noRefresh  = CommonOptions.NoRefreshOption();
         var resetBookmarks = CommonOptions.ResetBookmarksOption();
@@ -68,13 +76,21 @@ public static class DeployCommand
                 }
             }
 
+            var resolvedSourcePath = parse.GetValue(src) ?? config?.Source?.Path ?? "";
+            if (string.IsNullOrWhiteSpace(resolvedSourcePath))
+            {
+                Console.Error.WriteLine(
+                    "Source not provided. Pass --source <path>, or set source.path in your weft.yaml.");
+                return ExitCodes.ConfigError;
+            }
+
             ResolvedProfile profile;
             try
             {
                 profile = ProfileResolver.Build(
                     config: config,
                     profileName: parse.GetValue(targetOpt) ?? "default",
-                    sourcePath: parse.GetValue(src) ?? config?.Source?.Path ?? "",
+                    sourcePath: resolvedSourcePath,
                     artifactsDirectory: parse.GetValue(artifacts)!,
                     noRefresh: parse.GetValue(noRefresh),
                     resetBookmarks: parse.GetValue(resetBookmarks),

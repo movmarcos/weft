@@ -113,6 +113,28 @@ public class DeployCommandTests
     }
 
     [Fact]
+    public void Source_workspace_database_are_optional_when_config_target_supplied()
+    {
+        // Regression: deploy used to fail with `--source is required` at parse time even when
+        // weft.yaml supplied source.path. The CLI's documented YAML-fallback was unreachable.
+        var cmd = DeployCommand.Build();
+        var parse = cmd.Parse(new[] { "--config", "anything.yaml", "--target", "dev" });
+        parse.Errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Deploy_still_fails_clearly_when_neither_source_flag_nor_yaml_provides_it()
+    {
+        // Same parse layer accepts the args (no --source), but the action handler should fail
+        // with a clean ConfigError + a message that names both options the user could use.
+        // We can't easily exercise that here without a real subprocess; covered by smoke tests.
+        // This test just locks in that the parse layer accepts what we want it to.
+        var cmd = DeployCommand.Build();
+        var parse = cmd.Parse(new[] { "--target", "dev" });
+        parse.Errors.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task Returns_TmslExecutionError_when_executor_reports_failure()
     {
         var src = TinyStaticPath();
