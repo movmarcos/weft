@@ -1,6 +1,7 @@
 // Copyright (c) Marcos Magri / Weft contributors. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Reactive;
@@ -46,6 +47,16 @@ public sealed class ShellViewModel : ReactiveObject
 
         OpenModelCommand = ReactiveCommand.Create<string>(OpenModel);
 
+        var canSaveAs = this.WhenAnyValue(x => x.Explorer).Select(e => e is not null);
+        SaveAsCommand = ReactiveCommand.Create(
+            () => SaveAsRequested?.Invoke(this, EventArgs.Empty),
+            canSaveAs);
+
+        var canReload = this.WhenAnyValue(x => x.IsReadOnly);
+        ReloadFromWorkspaceCommand = ReactiveCommand.Create(
+            () => ReloadRequested?.Invoke(this, EventArgs.Empty),
+            canReload);
+
         this.WhenAnyValue(x => x.Explorer).Subscribe(_ =>
             this.RaisePropertyChanged(nameof(StatusText)));
     }
@@ -88,8 +99,13 @@ public sealed class ShellViewModel : ReactiveObject
         private set => this.RaiseAndSetIfChanged(ref _workspaceLabel, value);
     }
 
-    public ReactiveCommand<Unit, Unit>   SaveCommand      { get; }
-    public ReactiveCommand<string, Unit> OpenModelCommand { get; }
+    public ReactiveCommand<Unit, Unit>   SaveCommand                  { get; }
+    public ReactiveCommand<string, Unit> OpenModelCommand             { get; }
+    public ReactiveCommand<Unit, Unit>   SaveAsCommand                { get; }
+    public ReactiveCommand<Unit, Unit>   ReloadFromWorkspaceCommand   { get; }
+
+    public event EventHandler? SaveAsRequested;
+    public event EventHandler? ReloadRequested;
 
     public string StatusText => Explorer is null
         ? "No model open"

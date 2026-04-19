@@ -15,6 +15,8 @@
         <MenuItem Header="_Connect to workspace…" Click="OnConnectToWorkspace"
                   InputGesture="Ctrl+Shift+O"/>
         <MenuItem Header="_Save" Command="{Binding SaveCommand}"/>
+        <MenuItem Header="Save _As .bim…" Command="{Binding SaveAsCommand}"/>
+        <MenuItem Header="Re_load from workspace" Command="{Binding ReloadFromWorkspaceCommand}"/>
         <Separator/>
         <MenuItem Header="E_xit" Click="OnExit"/>
       </MenuItem>

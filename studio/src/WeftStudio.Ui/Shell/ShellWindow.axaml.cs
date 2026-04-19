@@ -3,6 +3,7 @@
 
 using System.Linq;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -23,11 +24,19 @@ public partial class ShellWindow : Window
         Loaded += (_, _) =>
         {
             var explorerView = this.GetVisualDescendants().OfType<ExplorerView>().FirstOrDefault();
-            if (explorerView is null) return;
-            explorerView.MeasureDoubleClicked += (table, measure) =>
+            if (explorerView is not null)
             {
-                if (DataContext is ShellViewModel vm) vm.OpenMeasure(table, measure);
-            };
+                explorerView.MeasureDoubleClicked += (table, measure) =>
+                {
+                    if (DataContext is ShellViewModel vm) vm.OpenMeasure(table, measure);
+                };
+            }
+
+            if (DataContext is ShellViewModel shellVm)
+            {
+                shellVm.SaveAsRequested += async (_, _) => await OnSaveAs();
+                shellVm.ReloadRequested += async (_, _) => await OnReload();
+            }
         };
     }
 
@@ -75,5 +84,32 @@ public partial class ShellWindow : Window
     {
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime dt)
             dt.Shutdown();
+    }
+
+    private async Task OnSaveAs()
+    {
+        if (DataContext is not ShellViewModel vm || vm.Explorer is null) return;
+
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save model as .bim",
+            DefaultExtension = "bim",
+            FileTypeChoices = new[]
+            {
+                new FilePickerFileType("Power BI model") { Patterns = new[] { "*.bim" } }
+            }
+        });
+        var path = file?.TryGetLocalPath();
+        if (path is not null)
+            WeftStudio.App.Persistence.BimSaver.SaveAs(vm.Explorer.Session, path);
+    }
+
+    private async Task OnReload()
+    {
+        // v0.1.1: simplest reload — re-open the Connect dialog pre-filled.
+        // Full re-fetch with persisted workspace state is deferred to a later iteration.
+        if (DataContext is ShellViewModel vm && vm.IsReadOnly)
+            OnConnectToWorkspace(this, new RoutedEventArgs());
+        await Task.CompletedTask;
     }
 }

@@ -21,4 +21,16 @@ public static class BimSaver
         File.WriteAllText(session.SourcePath!, json);
         session.ChangeTracker.MarkClean();
     }
+
+    public static void SaveAs(ModelSession session, string path)
+    {
+        var json = JsonSerializer.SerializeDatabase(session.Database,
+            new SerializeOptions
+            {
+                IgnoreInferredObjects = true,
+                IgnoreInferredProperties = true,
+                IgnoreTimestamps = true
+            });
+        File.WriteAllText(path, json);
+    }
 }
