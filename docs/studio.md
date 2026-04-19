@@ -34,7 +34,11 @@ Studio is cross-platform (Windows / macOS / Linux), built on Avalonia + .NET 10,
 
 Studio is open source — easiest install is **clone + build** from source. You need `git` and the **.NET 10 SDK** installed first. Pick your platform.
 
-> **Network blocks .NET install or release downloads?** A pre-built self-contained Windows x64 binary lives in the repo at [`releases/v0.1.1/`](https://github.com/movmarcos/weft/tree/master/releases/v0.1.1) — clone the repo and unzip. No .NET install needed. See [`releases/v0.1.1/README.md`](https://github.com/movmarcos/weft/blob/master/releases/v0.1.1/README.md) for the exact PowerShell.
+> **Network blocks .NET install or release downloads?** Pre-built self-contained Windows x64 binaries live in the repo:
+> - **Studio:** [`releases/v0.1.1/`](https://github.com/movmarcos/weft/tree/master/releases/v0.1.1) — clone, unzip, run.
+> - **CLI:** [`releases/cli-v1.0.0/`](https://github.com/movmarcos/weft/tree/master/releases/cli-v1.0.0) — clone, single `weft.exe`, no extract needed.
+>
+> Both bundle the .NET 10 runtime so no install is required.
 
 ### Prerequisites — install .NET 10 SDK
 
