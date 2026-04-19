@@ -9,7 +9,9 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
+using ReactiveUI;
 using WeftStudio.App.Connections;
 using WeftStudio.Ui.Connect;
 using WeftStudio.Ui.Explorer;
@@ -21,23 +23,34 @@ public partial class ShellWindow : Window
     public ShellWindow()
     {
         InitializeComponent();
+
+        // ContentControl materializes ExplorerView lazily — first when ShellViewModel.Explorer
+        // becomes non-null. Window.Loaded fires once at startup before any model is open, so
+        // a one-shot visual-tree search for ExplorerView there always returns null and the
+        // MeasureDoubleClicked event never gets wired. Re-find + rewire whenever Explorer changes.
         Loaded += (_, _) =>
         {
-            var explorerView = this.GetVisualDescendants().OfType<ExplorerView>().FirstOrDefault();
-            if (explorerView is not null)
-            {
-                explorerView.MeasureDoubleClicked += (table, measure) =>
-                {
-                    if (DataContext is ShellViewModel vm) vm.OpenMeasure(table, measure);
-                };
-            }
+            if (DataContext is not ShellViewModel shellVm) return;
 
-            if (DataContext is ShellViewModel shellVm)
-            {
-                shellVm.SaveAsRequested += async (_, _) => await OnSaveAs();
-                shellVm.ReloadRequested += (_, _) => OnReload();
-            }
+            shellVm.SaveAsRequested += async (_, _) => await OnSaveAs();
+            shellVm.ReloadRequested += (_, _) => OnReload();
+
+            shellVm.WhenAnyValue(x => x.Explorer)
+                .Subscribe(_ => Dispatcher.UIThread.Post(WireExplorerDoubleClick));
         };
+    }
+
+    private void WireExplorerDoubleClick()
+    {
+        var explorerView = this.GetVisualDescendants().OfType<ExplorerView>().FirstOrDefault();
+        if (explorerView is null) return;
+        explorerView.MeasureDoubleClicked -= OnMeasureDoubleClicked;
+        explorerView.MeasureDoubleClicked += OnMeasureDoubleClicked;
+    }
+
+    private void OnMeasureDoubleClicked(string table, string measure)
+    {
+        if (DataContext is ShellViewModel vm) vm.OpenMeasure(table, measure);
     }
 
     private async void OnFileOpen(object? sender, RoutedEventArgs e)
