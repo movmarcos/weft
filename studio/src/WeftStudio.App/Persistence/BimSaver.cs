@@ -7,30 +7,28 @@ namespace WeftStudio.App.Persistence;
 
 public static class BimSaver
 {
-    public static void Save(ModelSession session)
-    {
-        if (string.IsNullOrEmpty(session.SourcePath))
-            throw new InvalidOperationException(
-                "Cannot save: session has no source path. Use Save-As instead.");
-
-        var json = JsonSerializer.SerializeDatabase(session.Database,
-            new SerializeOptions { IgnoreInferredObjects = true,
-                                   IgnoreInferredProperties = true,
-                                   IgnoreTimestamps = true });
-
-        File.WriteAllText(session.SourcePath!, json);
-        session.ChangeTracker.MarkClean();
-    }
-
-    public static void SaveAs(ModelSession session, string path)
-    {
-        var json = JsonSerializer.SerializeDatabase(session.Database,
+    private static string Serialize(ModelSession session) =>
+        JsonSerializer.SerializeDatabase(session.Database,
             new SerializeOptions
             {
                 IgnoreInferredObjects = true,
                 IgnoreInferredProperties = true,
                 IgnoreTimestamps = true
             });
-        File.WriteAllText(path, json);
+
+    public static void Save(ModelSession session)
+    {
+        if (string.IsNullOrEmpty(session.SourcePath))
+            throw new InvalidOperationException(
+                "Cannot save: session has no source path. Use Save-As instead.");
+
+        File.WriteAllText(session.SourcePath!, Serialize(session));
+        session.ChangeTracker.MarkClean();
+    }
+
+    public static void SaveAs(ModelSession session, string path)
+    {
+        File.WriteAllText(path, Serialize(session));
+        // Workspace-origin sessions can also be saved — ReadOnly only gates the in-place Save.
     }
 }

@@ -35,7 +35,7 @@ public partial class ShellWindow : Window
             if (DataContext is ShellViewModel shellVm)
             {
                 shellVm.SaveAsRequested += async (_, _) => await OnSaveAs();
-                shellVm.ReloadRequested += async (_, _) => await OnReload();
+                shellVm.ReloadRequested += (_, _) => OnReload();
             }
         };
     }
@@ -104,12 +104,11 @@ public partial class ShellWindow : Window
             WeftStudio.App.Persistence.BimSaver.SaveAs(vm.Explorer.Session, path);
     }
 
-    private async Task OnReload()
+    private void OnReload()
     {
         // v0.1.1: simplest reload — re-open the Connect dialog pre-filled.
         // Full re-fetch with persisted workspace state is deferred to a later iteration.
         if (DataContext is ShellViewModel vm && vm.IsReadOnly)
             OnConnectToWorkspace(this, new RoutedEventArgs());
-        await Task.CompletedTask;
     }
 }
