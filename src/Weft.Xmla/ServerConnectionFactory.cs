@@ -11,10 +11,7 @@ public sealed class ServerConnectionFactory
     public Server Connect(string workspaceUrl, string databaseName, AccessToken token)
     {
         var server = new Server();
-        server.AccessToken = new Microsoft.AnalysisServices.AccessToken(
-            token.Value,
-            token.ExpiresOnUtc.UtcDateTime);
-        var conn = new XmlaConnectionStringBuilder().Build(workspaceUrl, databaseName);
+        var conn = new XmlaConnectionStringBuilder().Build(workspaceUrl, databaseName, token);
         server.Connect(conn);
         return server;
     }
