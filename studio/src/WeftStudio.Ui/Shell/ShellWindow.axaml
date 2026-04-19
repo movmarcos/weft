@@ -12,11 +12,23 @@
     <Menu DockPanel.Dock="Top">
       <MenuItem Header="_File">
         <MenuItem Header="_Open..." Click="OnFileOpen"/>
+        <MenuItem Header="_Connect to workspace…" Click="OnConnectToWorkspace"
+                  InputGesture="Ctrl+Shift+O"/>
         <MenuItem Header="_Save" Command="{Binding SaveCommand}"/>
         <Separator/>
         <MenuItem Header="E_xit" Click="OnExit"/>
       </MenuItem>
     </Menu>
+    <Border DockPanel.Dock="Top" Background="#ffe6c8"
+            BorderBrush="#c36012" BorderThickness="0,0,0,2"
+            Padding="14,8"
+            IsVisible="{Binding IsReadOnly}">
+      <TextBlock Foreground="#5a2d08" FontSize="13">
+        <Run Text="&#x25C9; READ-ONLY snapshot of "/>
+        <Run Text="{Binding WorkspaceLabel}" FontStyle="Italic"/>
+        <Run Text=" · File &gt; Save disabled, use File &gt; Save As .bim to keep a local copy"/>
+      </TextBlock>
+    </Border>
     <Grid ColumnDefinitions="48,250,*,300" RowDefinitions="*,24">
       <shell:ActivityBar Grid.Column="0" Grid.Row="0"/>
       <Border Grid.Column="1" Grid.Row="0" Background="#F4F4F4"

@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WeftStudio.App\WeftStudio.App.csproj" />
     <ProjectReference Include="..\..\..\src\Weft.Auth\Weft.Auth.csproj" />
+    <ProjectReference Include="..\..\..\src\Weft.Xmla\Weft.Xmla.csproj" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="DaxEditor\DaxSyntaxHighlighting.xshd"/>

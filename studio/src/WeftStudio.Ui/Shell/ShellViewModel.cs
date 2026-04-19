@@ -102,6 +102,8 @@ public sealed class ShellViewModel : ReactiveObject
     /// </summary>
     public void AdoptSession(ModelSession session, string? workspaceLabel = null)
     {
+        OpenTabs.Clear();
+        ActiveTab = null;
         Explorer = new ExplorerViewModel(session);
         IsReadOnly = session.ReadOnly;
         WorkspaceLabel = workspaceLabel;
@@ -110,9 +112,9 @@ public sealed class ShellViewModel : ReactiveObject
     public void OpenModel(string bimPath)
     {
         var session = ModelSession.OpenBim(bimPath);
-        Explorer = new ExplorerViewModel(session);
         IsReadOnly = false;
         WorkspaceLabel = null;
+        Explorer = new ExplorerViewModel(session);
 
         var s = _store.Load();
         s.RecentFiles.Remove(bimPath);

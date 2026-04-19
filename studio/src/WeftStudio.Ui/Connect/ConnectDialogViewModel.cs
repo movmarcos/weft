@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.ObjectModel;
+using System.Reactive.Linq;
 using ReactiveUI;
 using Weft.Auth;
 using Weft.Core.Abstractions;
@@ -18,8 +19,24 @@ public sealed class ConnectDialogViewModel : ReactiveObject
     private ConnectDialogState _state = ConnectDialogState.Idle;
     private string? _errorBanner;
     private WorkspaceReference? _parsed;
+    private string _clientId = "";
+    private AuthMode _authMode = AuthMode.Interactive;
+    private readonly ObservableAsPropertyHelper<bool> _canSignIn;
 
-    public ConnectDialogViewModel(IConnectionManager mgr) => _mgr = mgr;
+    public ConnectDialogViewModel(IConnectionManager mgr)
+    {
+        _mgr = mgr;
+
+        _canSignIn = this
+            .WhenAnyValue(x => x.Url, x => x.ClientId, x => x.State,
+                (url, cid, state) =>
+                    !string.IsNullOrWhiteSpace(url) &&
+                    !string.IsNullOrWhiteSpace(cid) &&
+                    state != ConnectDialogState.SigningIn &&
+                    state != ConnectDialogState.Fetching &&
+                    state != ConnectDialogState.Loading)
+            .ToProperty(this, x => x.CanSignIn);
+    }
 
     public string Url
     {
@@ -78,8 +95,19 @@ public sealed class ConnectDialogViewModel : ReactiveObject
         }
     }
 
-    public string ClientId { get; set; } = "";
-    public AuthMode AuthMode { get; set; } = AuthMode.Interactive;
+    public string ClientId
+    {
+        get => _clientId;
+        set => this.RaiseAndSetIfChanged(ref _clientId, value);
+    }
+
+    public AuthMode AuthMode
+    {
+        get => _authMode;
+        set => this.RaiseAndSetIfChanged(ref _authMode, value);
+    }
+
+    public bool CanSignIn => _canSignIn.Value;
 
     public DatasetRow? SelectedRow
     {

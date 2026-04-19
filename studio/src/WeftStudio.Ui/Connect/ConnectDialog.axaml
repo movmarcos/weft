@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:connect="using:WeftStudio.Ui.Connect"
+        x:Class="WeftStudio.Ui.Connect.ConnectDialog"
+        x:DataType="connect:ConnectDialogViewModel"
+        Title="Connect to workspace"
+        Width="820" Height="540"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+  <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" Margin="18">
+    <TextBlock Grid.Row="0" Text="Connect to a workspace" FontWeight="Bold" FontSize="16"/>
+    <TextBlock Grid.Row="1" FontSize="12" Margin="0,4,0,12"
+               Text="Open a semantic model read-only from a Power BI / Fabric workspace."/>
+
+    <StackPanel Grid.Row="2" Orientation="Vertical" Spacing="4">
+      <TextBlock Text="XMLA endpoint URL"/>
+      <TextBox Text="{Binding Url}" FontFamily="Cascadia Mono,Menlo,monospace"
+               Watermark="powerbi://api.powerbi.com/v1.0/myorg/&lt;workspace&gt;"/>
+      <TextBlock Text="{Binding UrlError}" Foreground="#b33" FontSize="11"
+                 IsVisible="{Binding UrlError, Converter={x:Static connect:NotNullConverter.Instance}}"/>
+    </StackPanel>
+
+    <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="16" Margin="0,10,0,10">
+      <TextBlock Text="Sign-in method" VerticalAlignment="Center"/>
+      <RadioButton Content="Interactive" GroupName="auth" IsChecked="True"/>
+      <RadioButton Content="Device code" GroupName="auth"/>
+    </StackPanel>
+
+    <Grid Grid.Row="4" RowDefinitions="Auto,*">
+      <TextBox Grid.Row="0" Text="{Binding FilterText}"
+               Watermark="Filter datasets by name…"
+               Margin="0,0,0,6"
+               IsVisible="{Binding State, Converter={x:Static connect:StateIsPickerConverter.Instance}}"/>
+      <DataGrid Grid.Row="1" ItemsSource="{Binding VisibleDatasets}"
+                SelectedItem="{Binding SelectedRow}"
+                IsReadOnly="True" CanUserSortColumns="True"
+                IsVisible="{Binding State, Converter={x:Static connect:StateIsPickerConverter.Instance}}">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Name"           Binding="{Binding Name}"           Width="*"/>
+          <DataGridTextColumn Header="Size"           Binding="{Binding SizeDisplay}"    Width="80"/>
+          <DataGridTextColumn Header="Updated"        Binding="{Binding UpdatedDisplay}" Width="110"/>
+          <DataGridTextColumn Header="Refresh policy" Binding="{Binding RefreshPolicy}"  Width="130"/>
+          <DataGridTextColumn Header="Owner"          Binding="{Binding Owner}"          Width="130"/>
+        </DataGrid.Columns>
+      </DataGrid>
+      <TextBlock Grid.Row="1" Text="{Binding ErrorBanner}"
+                 Foreground="#b33" TextWrapping="Wrap"
+                 IsVisible="{Binding ErrorBanner, Converter={x:Static connect:NotNullConverter.Instance}}"/>
+    </Grid>
+
+    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+      <Button Content="Cancel" Click="OnCancel"/>
+      <Button Content="Sign in &amp; list datasets" Click="OnSignIn"
+              IsEnabled="{Binding CanSignIn}"
+              IsVisible="{Binding State, Converter={x:Static connect:StateNotPickerConverter.Instance}}"/>
+      <Button Content="Open read-only" Click="OnOpen" Background="#2e6b2e" Foreground="White"
+              IsEnabled="{Binding SelectedRow, Converter={x:Static connect:NotNullConverter.Instance}}"
+              IsVisible="{Binding State, Converter={x:Static connect:StateIsPickerConverter.Instance}}"/>
+    </StackPanel>
+  </Grid>
+</Window>
